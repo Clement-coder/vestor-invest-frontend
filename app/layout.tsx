@@ -1,10 +1,17 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0A0F25' },
+  ],
+}
 
 export const metadata: Metadata = {
   title: 'Vestor Invest - Premium Crypto Investing',
@@ -27,10 +34,6 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-icon.png',
   },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0F25' },
-  ],
   openGraph: {
     title: 'Vestor Invest - Premium Crypto Investing',
     description: 'Experience the future of cryptocurrency investing with AI-powered insights and secure transactions.',

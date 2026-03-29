@@ -170,8 +170,8 @@
 @layer components {
   .glass {
     backdrop-filter: blur(12px);
-    background: rgb(var(--card));
-    border: 1px solid rgb(var(--border));
+    background: rgb(var(--card) / <alpha-value>);
+    border: 1px solid rgb(var(--border) / <alpha-value>);
     border-radius: var(--radius);
   }
 
@@ -183,8 +183,8 @@
 
   .glass-elevated {
     backdrop-filter: blur(12px);
-    background: rgb(var(--card));
-    border: 1px solid rgb(var(--border));
+    background: rgb(var(--card) / <alpha-value>);
+    border: 1px solid rgb(var(--border) / <alpha-value>);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border-radius: var(--radius);
   }
