@@ -1,7 +1,8 @@
 @import 'tailwindcss';
+/* v2 */
 
-:root {
-  /* Vestor Invest Brand Colors */
+:root,
+[data-theme='dark'] {
   --background: #0a0f25;
   --foreground: #ffffff;
   --primary: #00a8ff;
@@ -16,6 +17,46 @@
   --input: rgba(255, 255, 255, 0.1);
   --ring: #00c4ff;
   --radius: 0.625rem;
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='darker'] {
+  --background: #05080f;
+  --foreground: #e8eaf0;
+  --primary: #00a8ff;
+  --primary-foreground: #05080f;
+  --secondary: #39ff9e;
+  --secondary-foreground: #05080f;
+  --accent: #39ff9e;
+  --accent-foreground: #05080f;
+  --muted: rgba(255, 255, 255, 0.25);
+  --muted-foreground: rgba(255, 255, 255, 0.5);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.07);
+  --ring: #00c4ff;
+  --radius: 0.625rem;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='midnight'] {
+  --background: #000000;
+  --foreground: #c8d0e0;
+  --primary: #7c6fff;
+  --primary-foreground: #000000;
+  --secondary: #ff6fff;
+  --secondary-foreground: #000000;
+  --accent: #ff6fff;
+  --accent-foreground: #000000;
+  --muted: rgba(255, 255, 255, 0.2);
+  --muted-foreground: rgba(255, 255, 255, 0.45);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #7c6fff;
+  --radius: 0.625rem;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
@@ -27,14 +68,11 @@
   border-color: var(--border);
 }
 
-html {
-  background-color: var(--background);
-  color: var(--foreground);
-}
-
+html,
 body {
   background-color: var(--background);
   color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @keyframes floating {
@@ -97,22 +135,22 @@ body {
   /* Glassmorphism Utilities */
   .glass {
     backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius);
   }
 
   .glass-light {
     backdrop-filter: blur(4px);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius);
   }
 
   .glass-elevated {
     backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border-radius: var(--radius);
   }
@@ -146,7 +184,7 @@ body {
 
   /* Gradient Button */
   .gradient-btn {
-    background: linear-gradient(135deg, #00a8ff 0%, #1e90ff 50%, #39ff9e 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     background-size: 200% 200%;
     animation: gradient-shift 3s ease infinite;
   }

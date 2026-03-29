@@ -2,8 +2,8 @@
 
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
-import { GlassInput } from '@/components/glass/glass-input'
-import { Bell, Shield, Palette, Globe, Trash2 } from 'lucide-react'
+import { Bell, Shield, Palette, Globe, Trash2, Check } from 'lucide-react'
+import { useTheme } from '@/components/common/theme-provider'
 import { useState } from 'react'
 import React from 'react'
 
@@ -31,11 +31,11 @@ function Row({ label, description, children }: { label: string; description?: st
 }
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme()
   const [notifs, setNotifs] = useState({ email: true, push: true, sms: false, marketing: false })
   const [security, setSecurity] = useState({ twoFactor: false, loginAlerts: true, sessionTimeout: true })
   const [currency, setCurrency] = useState('USD')
   const [language, setLanguage] = useState('en')
-  const [theme, setTheme] = useState('dark')
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -122,22 +122,41 @@ export default function SettingsPage() {
 
       {/* Appearance */}
       <GlassCard variant="elevated">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-5">
           <Palette size={18} className="text-white/60" />
           <h2 className="text-lg font-semibold text-white">Appearance</h2>
         </div>
-        <div className="flex gap-3">
-          {['dark', 'darker', 'midnight'].map(t => (
+        <div className="grid grid-cols-3 gap-3">
+          {([
+            { id: 'dark',     label: 'Dark',     bg: '#0a0f25', accent: '#00a8ff' },
+            { id: 'darker',   label: 'Darker',   bg: '#05080f', accent: '#00a8ff' },
+            { id: 'midnight', label: 'Midnight', bg: '#000000', accent: '#7c6fff' },
+          ] as const).map(t => (
             <button
-              key={t}
-              onClick={() => setTheme(t)}
-              className={`flex-1 py-3 rounded-lg text-sm font-medium capitalize transition-all border ${
-                theme === t
-                  ? 'bg-white/10 text-white border-white/30'
-                  : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/8'
+              key={t.id}
+              onClick={() => setTheme(t.id)}
+              className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 ${
+                theme === t.id ? 'border-[var(--primary)] bg-white/10' : 'border-white/10 bg-white/5 hover:border-white/20'
               }`}
             >
-              {t}
+              {/* Mini preview */}
+              <div className="w-full h-14 rounded-lg overflow-hidden border border-white/10" style={{ background: t.bg }}>
+                <div className="h-3 w-full border-b border-white/10" style={{ background: t.bg }} />
+                <div className="flex gap-1 p-1.5">
+                  <div className="w-6 h-6 rounded" style={{ background: `${t.accent}33` }} />
+                  <div className="flex-1 space-y-1 pt-0.5">
+                    <div className="h-1.5 rounded-full bg-white/20 w-3/4" />
+                    <div className="h-1.5 rounded-full bg-white/10 w-1/2" />
+                  </div>
+                </div>
+                <div className="mx-1.5 h-3 rounded" style={{ background: `${t.accent}22` }} />
+              </div>
+              <span className="text-sm font-medium text-white">{t.label}</span>
+              {theme === t.id && (
+                <span className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: t.accent }}>
+                  <Check size={11} className="text-black" />
+                </span>
+              )}
             </button>
           ))}
         </div>
