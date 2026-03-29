@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { TrendingUp, TrendingDown, Gift, RefreshCw, Check } from 'lucide-react'
 import React from 'react'
 
 const chartData = [
@@ -200,7 +201,7 @@ export default function DashboardPage() {
               <ul className="space-y-2 mb-6 flex-1">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="text-white/70 text-sm flex items-center gap-2">
-                    <span className="text-neon-green">✓</span> {feature}
+                    <Check size={13} className="text-[#39ff9e] shrink-0" /> {feature}
                   </li>
                 ))}
               </ul>
@@ -228,10 +229,10 @@ export default function DashboardPage() {
               className="flex items-center justify-between p-4"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  {tx.type === 'Investment' && '📈'}
-                  {tx.type === 'Withdrawal' && '📉'}
-                  {tx.type === 'Dividend' && '💰'}
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white/70">
+                  {tx.type === 'Investment' && <TrendingUp size={18} />}
+                  {tx.type === 'Withdrawal' && <TrendingDown size={18} />}
+                  {tx.type === 'Dividend' && <Gift size={18} />}
                 </div>
                 <div>
                   <p className="text-white font-medium">{tx.type}</p>

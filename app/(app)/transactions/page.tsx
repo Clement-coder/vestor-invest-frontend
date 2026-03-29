@@ -3,6 +3,7 @@
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { TrendingUp, TrendingDown, Gift, ArrowLeftRight, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import React from 'react'
 
@@ -16,106 +17,25 @@ interface Transaction {
   date: string
   txHash: string
   color: string
-  icon: string
+}
+
+const txIcon = (type: string, status: string) => {
+  if (status === 'Failed') return <XCircle size={18} className="text-red-400" />
+  if (type === 'Investment') return <TrendingUp size={18} className="text-[#39ff9e]" />
+  if (type === 'Withdrawal') return <TrendingDown size={18} className="text-[#00a8ff]" />
+  if (type === 'Dividend') return <Gift size={18} className="text-[#39ff9e]" />
+  return <ArrowLeftRight size={18} className="text-white/60" />
 }
 
 const allTransactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'Investment',
-    asset: 'Bitcoin',
-    amount: 0.25,
-    amountUSD: 12500,
-    status: 'Completed',
-    date: '2024-01-15 14:30',
-    txHash: '0x1a2b3c4d...',
-    color: 'text-neon-green',
-    icon: '📈',
-  },
-  {
-    id: '2',
-    type: 'Withdrawal',
-    asset: 'Ethereum',
-    amount: 5,
-    amountUSD: 15000,
-    status: 'Pending',
-    date: '2024-01-14 10:15',
-    txHash: '0x5e6f7g8h...',
-    color: 'text-neon-cyan',
-    icon: '📉',
-  },
-  {
-    id: '3',
-    type: 'Dividend',
-    asset: 'Staking Rewards',
-    amount: 0,
-    amountUSD: 342.50,
-    status: 'Completed',
-    date: '2024-01-13 08:00',
-    txHash: '0x9i0j1k2l...',
-    color: 'text-neon-green',
-    icon: '💰',
-  },
-  {
-    id: '4',
-    type: 'Investment',
-    asset: 'Ethereum',
-    amount: 10,
-    amountUSD: 30000,
-    status: 'Completed',
-    date: '2024-01-12 16:45',
-    txHash: '0x3m4n5o6p...',
-    color: 'text-neon-green',
-    icon: '📈',
-  },
-  {
-    id: '5',
-    type: 'Transfer',
-    asset: 'Bitcoin',
-    amount: 0.5,
-    amountUSD: 25000,
-    status: 'Completed',
-    date: '2024-01-11 12:20',
-    txHash: '0x7q8r9s0t...',
-    color: 'text-white/70',
-    icon: '🔄',
-  },
-  {
-    id: '6',
-    type: 'Dividend',
-    asset: 'Farming Rewards',
-    amount: 0,
-    amountUSD: 215.75,
-    status: 'Completed',
-    date: '2024-01-10 09:30',
-    txHash: '0x1u2v3w4x...',
-    color: 'text-neon-green',
-    icon: '💰',
-  },
-  {
-    id: '7',
-    type: 'Withdrawal',
-    asset: 'Bitcoin',
-    amount: 0.1,
-    amountUSD: 5000,
-    status: 'Failed',
-    date: '2024-01-09 14:00',
-    txHash: '0x5y6z7a8b...',
-    color: 'text-red-400',
-    icon: '❌',
-  },
-  {
-    id: '8',
-    type: 'Investment',
-    asset: 'Altcoin Mix',
-    amount: 0,
-    amountUSD: 5000,
-    status: 'Completed',
-    date: '2024-01-08 11:15',
-    txHash: '0x9c0d1e2f...',
-    color: 'text-neon-green',
-    icon: '📈',
-  },
+  { id: '1', type: 'Investment', asset: 'Bitcoin', amount: 0.25, amountUSD: 12500, status: 'Completed', date: '2024-01-15 14:30', txHash: '0x1a2b3c4d...', color: 'text-[#39ff9e]' },
+  { id: '2', type: 'Withdrawal', asset: 'Ethereum', amount: 5, amountUSD: 15000, status: 'Pending', date: '2024-01-14 10:15', txHash: '0x5e6f7g8h...', color: 'text-[#00a8ff]' },
+  { id: '3', type: 'Dividend', asset: 'Staking Rewards', amount: 0, amountUSD: 342.50, status: 'Completed', date: '2024-01-13 08:00', txHash: '0x9i0j1k2l...', color: 'text-[#39ff9e]' },
+  { id: '4', type: 'Investment', asset: 'Ethereum', amount: 10, amountUSD: 30000, status: 'Completed', date: '2024-01-12 16:45', txHash: '0x3m4n5o6p...', color: 'text-[#39ff9e]' },
+  { id: '5', type: 'Transfer', asset: 'Bitcoin', amount: 0.5, amountUSD: 25000, status: 'Completed', date: '2024-01-11 12:20', txHash: '0x7q8r9s0t...', color: 'text-white/70' },
+  { id: '6', type: 'Dividend', asset: 'Farming Rewards', amount: 0, amountUSD: 215.75, status: 'Completed', date: '2024-01-10 09:30', txHash: '0x1u2v3w4x...', color: 'text-[#39ff9e]' },
+  { id: '7', type: 'Withdrawal', asset: 'Bitcoin', amount: 0.1, amountUSD: 5000, status: 'Failed', date: '2024-01-09 14:00', txHash: '0x5y6z7a8b...', color: 'text-red-400' },
+  { id: '8', type: 'Investment', asset: 'Altcoin Mix', amount: 0, amountUSD: 5000, status: 'Completed', date: '2024-01-08 11:15', txHash: '0x9c0d1e2f...', color: 'text-[#39ff9e]' },
 ]
 
 export default function TransactionsPage() {
@@ -183,8 +103,9 @@ export default function TransactionsPage() {
             >
               {/* Left Section */}
               <div className="flex items-start md:items-center gap-4 flex-1">
-                {/* Icon */}
-                <div className="text-3xl">{tx.icon}</div>
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                  {txIcon(tx.type, tx.status)}
+                </div>
 
                 {/* Details */}
                 <div className="flex-1">

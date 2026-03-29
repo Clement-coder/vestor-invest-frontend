@@ -3,6 +3,7 @@
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassModal } from '@/components/glass/glass-modal'
+import { Check } from 'lucide-react'
 import { useState } from 'react'
 import React from 'react'
 
@@ -139,7 +140,7 @@ export default function PlansPage() {
             <ul className="space-y-3 mb-6 flex-1">
               {plan.features.map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-2 text-white/70 text-sm">
-                  <span className="text-neon-green mt-0.5">✓</span>
+                  <Check size={14} className="text-[#39ff9e] mt-0.5 shrink-0" />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -211,9 +212,9 @@ export default function PlansPage() {
                   {plans.map(plan => (
                     <td key={plan.id} className="text-center p-4">
                       {['starter', 'growth'].includes(plan.id) ? (
-                        <span className="text-white/60">Email only</span>
+                        <span className="text-white/60 text-sm">Email only</span>
                       ) : (
-                        <span className="text-neon-green">✓</span>
+                        <Check size={16} className="text-[#39ff9e] mx-auto" />
                       )}
                     </td>
                   ))}
@@ -223,9 +224,9 @@ export default function PlansPage() {
                   {plans.map(plan => (
                     <td key={plan.id} className="text-center p-4">
                       {['premium', 'exclusive'].includes(plan.id) ? (
-                        <span className="text-neon-green">✓</span>
+                        <Check size={16} className="text-[#39ff9e] mx-auto" />
                       ) : (
-                        <span className="text-white/30">-</span>
+                        <span className="text-white/30">—</span>
                       )}
                     </td>
                   ))}

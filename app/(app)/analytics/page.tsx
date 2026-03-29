@@ -3,6 +3,7 @@
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassChart } from '@/components/glass/glass-chart'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useState } from 'react'
 import {
   LineChart,
@@ -79,10 +80,9 @@ export default function AnalyticsPage() {
             <p className="text-white/60 text-sm mb-2">{metric.label}</p>
             <p className={`text-2xl font-bold ${metric.color}`}>{metric.value}</p>
             <div className="flex items-center gap-1 mt-2">
-              <span className="text-xs text-white/50">
-                {metric.trend === 'up' && '↑'}
-                {metric.trend === 'down' && '↓'}
-              </span>
+              {metric.trend === 'up' && <TrendingUp size={12} className="text-white/50" />}
+              {metric.trend === 'down' && <TrendingDown size={12} className="text-white/50" />}
+              {metric.trend === 'neutral' && <Minus size={12} className="text-white/50" />}
               <span className="text-xs text-white/50">vs last period</span>
             </div>
           </GlassCard>

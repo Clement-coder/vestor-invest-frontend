@@ -1,7 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import React, { useEffect } from 'react'
+import { X } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
 
 interface GlassModalProps {
   isOpen: boolean
@@ -18,66 +19,108 @@ export function GlassModal({
   children,
   neonBorder = 'cyan',
 }: GlassModalProps) {
+  const [visible, setVisible] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [dragY, setDragY] = useState(0)
+  const startY = useRef(0)
+  const sheetRef = useRef<HTMLDivElement>(null)
+
+  // open/close animation
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
+      requestAnimationFrame(() => setVisible(true))
     } else {
-      document.body.style.overflow = 'unset'
+      setVisible(false)
+      const t = setTimeout(() => {
+        document.body.style.overflow = 'unset'
+        setDragY(0)
+      }, 300)
+      return () => clearTimeout(t)
     }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
+    return () => { document.body.style.overflow = 'unset' }
   }, [isOpen])
 
-  if (!isOpen) return null
+  // touch handlers
+  const onTouchStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY
+    setDragging(true)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const delta = e.touches[0].clientY - startY.current
+    if (delta > 0) setDragY(delta)
+  }
+
+  const onTouchEnd = () => {
+    setDragging(false)
+    if (dragY > 120) {
+      onClose()
+    } else {
+      setDragY(0)
+    }
+  }
+
+  if (!isOpen && !visible) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className={cn(
+          'absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+          visible ? 'opacity-100' : 'opacity-0'
+        )}
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-md mx-4 animate-in fade-in zoom-in-95 duration-300">
+      {/* Sheet */}
+      <div
+        ref={sheetRef}
+        style={{
+          transform: visible
+            ? `translateY(${dragY}px)`
+            : 'translateY(100%)',
+          transition: dragging ? 'none' : 'transform 300ms cubic-bezier(0.32,0.72,0,1)',
+        }}
+        className={cn(
+          'relative z-10 w-full',
+          // mobile: full width, leave ~60px gap at top
+          'sm:max-w-md sm:mx-4 sm:rounded-xl',
+          // on mobile: sheet from bottom, rounded top corners only
+          'rounded-t-2xl sm:rounded-xl',
+          'max-h-[calc(100dvh-60px)] sm:max-h-[90vh]',
+          'flex flex-col',
+          'glass border backdrop-blur-md shadow-2xl',
+          neonBorder === 'cyan' && 'border-[#00a8ff]/30',
+          neonBorder === 'green' && 'border-[#39ff9e]/30',
+          neonBorder === 'none' && 'border-white/10',
+        )}
+      >
+        {/* Drag handle — mobile only */}
         <div
-          className={cn(
-            'glass rounded-xl p-6 border backdrop-blur-md',
-            'shadow-glass-lg shadow-black/40',
-            neonBorder === 'cyan' && 'border-neon-cyan/30 glow-cyan',
-            neonBorder === 'green' && 'border-neon-green/30 glow-green',
-            neonBorder === 'none' && 'border-white/10'
-          )}
+          className="sm:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing shrink-0"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
-          {/* Close Button */}
+          <div className="w-10 h-1 rounded-full bg-white/30" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-4 pb-2 shrink-0">
+          {title && <h2 className="text-xl font-bold text-white">{title}</h2>}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+            className="ml-auto p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X size={18} />
           </button>
+        </div>
 
-          {/* Title */}
-          {title && (
-            <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
-          )}
-
-          {/* Content */}
-          <div>{children}</div>
+        {/* Content */}
+        <div className="px-6 pb-6 overflow-y-auto flex-1">
+          {children}
         </div>
       </div>
     </div>
