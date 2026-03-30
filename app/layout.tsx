@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/common/theme-provider'
+import { AuthProvider } from '@/context/auth-context'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -17,7 +18,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Vestor Invest - Premium Crypto Investing',
   description: 'Experience the future of cryptocurrency investing with AI-powered insights, real-time analytics, and secure transactions on the Vestor Invest platform.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
@@ -56,7 +56,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans antialiased">
         <ThemeProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
         <Analytics />
       </body>
