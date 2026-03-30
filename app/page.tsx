@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Logo } from '@/components/common/logo'
 import { LiveMarket } from '@/components/common/live-market'
+import { useAuth } from '@/context/auth-context'
 import {
   TrendingUp, Shield, Zap, BarChart2, Globe, Lock,
   ArrowRight, Star, ChevronRight, Cpu, Wallet, Bell,
@@ -47,6 +48,9 @@ const howItWorks = [
 ]
 
 export default function Home() {
+  const { user } = useAuth()
+  const cta = user ? '/dashboard' : '/signup'
+  const ctaLabel = user ? 'Go to Dashboard' : 'Get Started'
   return (
     <div className="min-h-screen bg-[#0a0f25] text-white overflow-x-hidden">
 
@@ -60,8 +64,8 @@ export default function Home() {
             <a href="#how" className="hover:text-white transition">How It Works</a>
             <Link href="/blog" className="hover:text-white transition">Blog</Link>
           </div>
-          <Link href="/signup" className="px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold bg-[#00a8ff] hover:bg-[#0090dd] text-white transition hover:shadow-lg hover:shadow-[#00a8ff]/30 hover:scale-105">
-            Get Started
+          <Link href={cta} className="px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold bg-[#00a8ff] hover:bg-[#0090dd] text-white transition hover:shadow-lg hover:shadow-[#00a8ff]/30 hover:scale-105">
+            {ctaLabel}
           </Link>
         </div>
       </nav>
@@ -119,8 +123,8 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Link href="/signup" className="group inline-flex items-center gap-2 px-7 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105 text-sm sm:text-base">
-              Start Investing Free
+            <Link href={cta} className="group inline-flex items-center gap-2 px-7 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105 text-sm sm:text-base">
+              {ctaLabel}
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <a href="#how" className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all text-sm sm:text-base font-medium">
@@ -199,8 +203,8 @@ export default function Home() {
             ))}
           </div>
           <div className="text-center mt-10">
-            <Link href="/signup" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
-              Get Started Now <ArrowRight size={16} />
+            <Link href={cta} className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
+              {ctaLabel} <ArrowRight size={16} />
             </Link>
           </div>
         </div>
@@ -237,8 +241,8 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup" className="block text-center py-2.5 rounded-xl text-sm font-semibold border transition-all hover:scale-105" style={{ borderColor: p.color + '40', color: p.color, backgroundColor: p.color + '10' }}>
-                    Get Started
+                  <Link href={cta} className="block text-center py-2.5 rounded-xl text-sm font-semibold border transition-all hover:scale-105" style={{ borderColor: p.color + '40', color: p.color, backgroundColor: p.color + '10' }}>
+                    {ctaLabel}
                   </Link>
                 </div>
               </div>
@@ -289,8 +293,8 @@ export default function Home() {
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Grow Your Wealth?</h2>
               <p className="text-white/60 mb-8 max-w-lg mx-auto">Join 180,000+ investors already earning with Vestor Invest. Start with as little as $100 — no experience needed.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup" className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
-                  Create Free Account <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <Link href={cta} className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
+                  {ctaLabel} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link href="/support" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all font-medium">
                   Talk to Support
