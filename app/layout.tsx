@@ -1,61 +1,52 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/common/theme-provider'
 import { AuthProvider } from '@/context/auth-context'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ['latin'] })
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0F25' },
-  ],
+  themeColor: '#0A0F25',
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export const metadata: Metadata = {
-  title: 'Vestor Invest - Premium Crypto Investing',
-  description: 'Experience the future of cryptocurrency investing with AI-powered insights, real-time analytics, and secure transactions on the Vestor Invest platform.',
+  title: 'Vestor Invest — Premium Crypto Investing Platform',
+  description: 'Grow your wealth with Vestor Invest. AI-powered crypto investment plans, real-time portfolio analytics, and bank-level security. Start with as little as $100.',
+  keywords: ['crypto investing', 'cryptocurrency', 'investment platform', 'portfolio analytics', 'bitcoin', 'ethereum'],
+  authors: [{ name: 'Vestor Invest' }],
+  creator: 'Vestor Invest',
+  publisher: 'Vestor Invest',
   icons: {
     icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
+      { url: '/VestorLog.png', type: 'image/png' },
     ],
-    apple: '/apple-icon.png',
+    apple: '/VestorLog.png',
+    shortcut: '/VestorLog.png',
   },
   openGraph: {
-    title: 'Vestor Invest - Premium Crypto Investing',
-    description: 'Experience the future of cryptocurrency investing with AI-powered insights and secure transactions.',
+    title: 'Vestor Invest — Premium Crypto Investing Platform',
+    description: 'Grow your wealth with AI-powered crypto investment plans and real-time analytics.',
     type: 'website',
+    siteName: 'Vestor Invest',
+    images: [{ url: '/VestorLog.png', width: 512, height: 512, alt: 'Vestor Invest' }],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Vestor Invest - Premium Crypto Investing',
-    description: 'Experience the future of cryptocurrency investing.',
+    card: 'summary',
+    title: 'Vestor Invest — Premium Crypto Investing',
+    description: 'AI-powered crypto investment plans with real-time analytics and bank-level security.',
+    images: ['/VestorLog.png'],
   },
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" className={geist.className}>
+      <body className="antialiased">
         <ThemeProvider>
           <AuthProvider>
             {children}
