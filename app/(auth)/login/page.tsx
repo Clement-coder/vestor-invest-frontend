@@ -8,8 +8,9 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { signInWithEmail, signInWithGoogle } from '@/lib/auth'
 import { FirebaseError } from 'firebase/app'
-import { Mail, Lock } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { toast } from 'sonner'
+import { EmailInput } from '@/components/common/email-input'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -56,9 +57,13 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       await signInWithGoogle()
+      router.push('/dashboard')
     } catch (err) {
-      toast.error('Google sign-in failed. Please try again.')
-      setErrors({ submit: 'Google sign-in failed. Please try again.' })
+      const code = (err as FirebaseError).code
+      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+        toast.error('Google sign-in failed. Please try again.')
+        setErrors({ submit: 'Google sign-in failed. Please try again.' })
+      }
       setIsLoading(false)
     }
   }
@@ -66,16 +71,11 @@ export default function LoginPage() {
   return (
     <AuthLayout title="Welcome Back" subtitle="Sign in to your account">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <GlassInput
-          label="Email Address"
-          type="email"
-          name="email"
-          placeholder="you@example.com"
+        <EmailInput
           value={formData.email}
-          onChange={handleChange}
+          onChange={(v) => { setFormData(p => ({ ...p, email: v })); if (errors.email) setErrors(p => ({ ...p, email: '' })) }}
           error={errors.email}
           disabled={isLoading}
-          icon={<Mail size={16} />}
         />
 
         <GlassInput

@@ -1,8 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut,
   sendPasswordResetEmail,
   sendEmailVerification,
@@ -26,14 +25,9 @@ export const signInWithEmail = (email: string, password: string) => {
   return signInWithEmailAndPassword(auth, email, password)
 }
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = () => {
   const { auth, googleProvider } = getFirebase()
-  await signInWithRedirect(auth, googleProvider)
-}
-
-export const getGoogleRedirectResult = () => {
-  const { auth } = getFirebase()
-  return getRedirectResult(auth)
+  return signInWithPopup(auth, googleProvider)
 }
 
 export const logOut = () => {

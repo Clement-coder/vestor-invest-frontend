@@ -5,11 +5,12 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { updateProfile } from 'firebase/auth'
 import { AuthLayout } from '@/components/layouts/auth-layout'
+import { EmailInput } from '@/components/common/email-input'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { signUpWithEmail, signInWithGoogle, sendVerificationEmail } from '@/lib/auth'
 import { FirebaseError } from 'firebase/app'
-import { Mail, Lock, User, CheckCircle2, XCircle } from 'lucide-react'
+import { Lock, User, CheckCircle2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 function getPasswordStrength(password: string) {
@@ -62,9 +63,7 @@ export default function SignupPage() {
       try {
         await sendVerificationEmail(user)
         toast.success('Account created! Check your email to verify.')
-      } catch (verifyErr) {
-        const code = (verifyErr as FirebaseError).code
-        console.error('Verification email error:', code, verifyErr)
+      } catch {
         toast.warning('Account created but verification email failed. You can resend it on the next page.')
       }
       router.push('/verify-email')
@@ -82,9 +81,13 @@ export default function SignupPage() {
     setIsLoading(true)
     try {
       await signInWithGoogle()
+      router.push('/dashboard')
     } catch (err) {
-      toast.error('Google sign-in failed. Please try again.')
-      setErrors({ submit: 'Google sign-in failed. Please try again.' })
+      const code = (err as FirebaseError).code
+      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+        toast.error('Google sign-in failed. Please try again.')
+        setErrors({ submit: 'Google sign-in failed. Please try again.' })
+      }
       setIsLoading(false)
     }
   }
@@ -104,16 +107,11 @@ export default function SignupPage() {
           icon={<User size={16} />}
         />
 
-        <GlassInput
-          label="Email Address"
-          type="email"
-          name="email"
-          placeholder="you@example.com"
+        <EmailInput
           value={formData.email}
-          onChange={handleChange}
+          onChange={(v) => { setFormData(p => ({ ...p, email: v })); if (errors.email) setErrors(p => ({ ...p, email: '' })) }}
           error={errors.email}
           disabled={isLoading}
-          icon={<Mail size={16} />}
         />
 
         <div>
@@ -180,18 +178,16 @@ export default function SignupPage() {
             />
             <label htmlFor="terms" className="text-sm text-white/70 leading-snug">
               I agree to the{' '}
-              <a href="#" className="text-neon-cyan hover:underline">Terms of Service</a>{' '}
+              <Link href="/terms" target="_blank" className="text-neon-cyan hover:underline">Terms of Service</Link>{' '}
               and{' '}
-              <a href="#" className="text-neon-cyan hover:underline">Privacy Policy</a>
+              <Link href="/privacy" target="_blank" className="text-neon-cyan hover:underline">Privacy Policy</Link>
             </label>
           </div>
           {errors.agreeTerms && <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1"><span className="inline-block w-1 h-1 rounded-full bg-red-400" />{errors.agreeTerms}</p>}
         </div>
 
         {errors.submit && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">
-            {errors.submit}
-          </div>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">{errors.submit}</div>
         )}
 
         <GlassButton type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
@@ -199,9 +195,7 @@ export default function SignupPage() {
         </GlassButton>
 
         <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10" />
-          </div>
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-[#0A0F25] px-2 text-white/40">Or continue with</span>
           </div>
