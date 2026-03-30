@@ -114,20 +114,18 @@ export default function ChatAgent() {
       {open && (
         <div
           style={{
-            ...r('16px'),
-            background: 'rgba(10,15,37,0.75)',
+            background: 'rgba(10,15,37,0.92)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             border: '1px solid rgba(255,255,255,0.12)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-            maxHeight: '520px',
           }}
-          className="fixed bottom-24 right-6 z-50 w-[340px] sm:w-[380px] flex flex-col overflow-hidden"
+          className="fixed inset-0 z-50 flex flex-col sm:inset-auto sm:bottom-24 sm:right-6 sm:w-[380px] sm:max-h-[520px] sm:rounded-2xl overflow-hidden"
         >
           {/* Header */}
           <div
-            style={{ ...r('16px 16px 0 0'), background: 'linear-gradient(135deg, rgba(37,99,235,0.3), rgba(37,99,235,0.1))' }}
-            className="flex items-center gap-3 px-4 py-3 border-b border-white/10"
+            style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.3), rgba(37,99,235,0.1))' }}
+            className="flex items-center gap-3 px-4 py-3 border-b border-white/10 sm:rounded-t-2xl"
           >
             <div style={r('50%')} className="w-9 h-9 bg-[#2563eb]/30 border border-[#2563eb]/40 flex items-center justify-center">
               <Bot size={18} className="text-[#2563eb]" />
@@ -142,7 +140,7 @@ export default function ChatAgent() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ minHeight: 0, maxHeight: '340px' }}>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 sm:max-h-[340px]">
             {messages.map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div
