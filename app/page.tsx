@@ -88,23 +88,17 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Infinite scrolling coin ticker */}
+        {/* Infinite scrolling ticker */}
         <div className="absolute top-16 left-0 right-0 overflow-hidden border-b border-white/5 bg-white/[0.02] py-2">
           <div className="flex gap-8 animate-[ticker_30s_linear_infinite] whitespace-nowrap">
-            {[...coins, ...coins, ...coins].map((coin, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs shrink-0">
-                <img
-                  src={`https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${coin.symbol.toLowerCase()}.png`}
-                  alt={coin.symbol}
-                  width={16}
-                  height={16}
-                  className="w-4 h-4 rounded-full"
-                />
-                <span className="font-bold text-white/80">{coin.symbol}</span>
-                <span className="text-white/50">{coin.price}</span>
-                <span className={coin.up ? 'text-[#39ff9e]' : 'text-red-400'}>{coin.change}</span>
-              </div>
-            ))}
+            {[...Array(3)].flatMap((_, r) =>
+              ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','MATIC','DOT','AVAX'].map((sym, i) => (
+                <div key={`${r}-${i}`} className="flex items-center gap-2 text-xs shrink-0">
+                  <img src={`https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${sym.toLowerCase()}.png`} alt={sym} width={14} height={14} className="w-3.5 h-3.5 rounded-full" />
+                  <span className="font-bold text-white/70">{sym}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
