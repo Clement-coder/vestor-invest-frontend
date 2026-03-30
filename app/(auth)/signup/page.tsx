@@ -3,12 +3,13 @@
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useState } from 'react'
+import { updateProfile } from 'firebase/auth'
 import { AuthLayout } from '@/components/layouts/auth-layout'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { signUpWithEmail, signInWithGoogle } from '@/lib/auth'
 import { FirebaseError } from 'firebase/app'
-import { Mail, Lock, CheckCircle2, XCircle } from 'lucide-react'
+import { Mail, Lock, User, CheckCircle2, XCircle } from 'lucide-react'
 
 function getPasswordStrength(password: string) {
   let score = 0
@@ -24,7 +25,7 @@ const strengthColor = ['', 'bg-red-500', 'bg-yellow-500', 'bg-blue-400', 'bg-neo
 
 export default function SignupPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '', agreeTerms: false })
+  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', agreeTerms: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
 
@@ -38,6 +39,7 @@ export default function SignupPage() {
 
   const validate = () => {
     const e: Record<string, string> = {}
+    if (!formData.fullName.trim()) e.fullName = 'Full name is required'
     if (!formData.email) e.email = 'Email is required'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) e.email = 'Enter a valid email'
     if (!formData.password) e.password = 'Password is required'
@@ -54,7 +56,8 @@ export default function SignupPage() {
     if (!validate()) return
     setIsLoading(true)
     try {
-      await signUpWithEmail(formData.email, formData.password)
+      const { user } = await signUpWithEmail(formData.email, formData.password)
+      await updateProfile(user, { displayName: formData.fullName.trim() })
       router.push('/onboarding')
     } catch (err) {
       const code = (err as FirebaseError).code
@@ -83,6 +86,18 @@ export default function SignupPage() {
   return (
     <AuthLayout title="Create Account" subtitle="Join Vestor Invest today">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <GlassInput
+          label="Full Name"
+          type="text"
+          name="fullName"
+          placeholder="John Doe"
+          value={formData.fullName}
+          onChange={handleChange}
+          error={errors.fullName}
+          disabled={isLoading}
+          icon={<User size={16} />}
+        />
+
         <GlassInput
           label="Email Address"
           type="email"
@@ -117,16 +132,16 @@ export default function SignupPage() {
               <p className="text-xs text-white/50">
                 Strength: <span className={`font-medium ${strength >= 3 ? 'text-neon-green' : strength === 2 ? 'text-yellow-400' : 'text-red-400'}`}>{strengthLabel[strength]}</span>
               </p>
-              <ul className="text-xs text-white/40 space-y-0.5">
-                {[
+              <ul className="text-xs space-y-0.5">
+                {([
                   [formData.password.length >= 8, '8+ characters'],
                   [/[A-Z]/.test(formData.password), 'Uppercase letter'],
                   [/[0-9]/.test(formData.password), 'Number'],
                   [/[^A-Za-z0-9]/.test(formData.password), 'Special character'],
-                ].map(([met, label], i) => (
+                ] as [boolean, string][]).map(([met, label], i) => (
                   <li key={i} className={`flex items-center gap-1.5 ${met ? 'text-neon-green' : 'text-white/30'}`}>
                     {met ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-                    {label as string}
+                    {label}
                   </li>
                 ))}
               </ul>

@@ -1,14 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Logo } from './logo'
 import { GlassButton } from '@/components/glass/glass-button'
+import { useAuth } from '@/context/auth-context'
+import { logOut } from '@/lib/auth'
 import {
   LayoutDashboard, TrendingUp, BarChart2, ArrowLeftRight,
   Wallet, User, Bell, Settings, Menu, X,
-  CheckCheck, Gift, AlertTriangle, Info,
+  CheckCheck, Gift, AlertTriangle, Info, LogOut,
 } from 'lucide-react'
 import React, { useState, useRef, useEffect } from 'react'
 
@@ -120,9 +122,20 @@ function SlidePanel({
 
 export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState(initialNotifications)
+
+  const handleLogout = async () => {
+    await logOut()
+    router.push('/login')
+  }
+
+  const initials = user?.displayName
+    ? user.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email?.[0].toUpperCase() || '?'
 
   const unread = notifications.filter(n => !n.read).length
   const markAllRead = () => setNotifications(n => n.map(x => ({ ...x, read: true })))
@@ -153,9 +166,23 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
               <Link href="/settings" className={cn('p-2 rounded-lg transition-all', pathname === '/settings' ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5')}>
                 <Settings size={18} />
               </Link>
-              <Link href="/profile" className={cn('p-2 rounded-lg transition-all', pathname === '/profile' ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5')}>
-                <User size={18} />
+              <Link href="/profile" className="flex items-center gap-2 pl-2 ml-1 border-l border-white/10">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00a8ff] to-[#39ff9e] flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                  {user?.photoURL
+                    ? <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
+                    : initials}
+                </div>
+                <span className="hidden sm:block text-sm text-white/70 max-w-[100px] truncate">
+                  {user?.displayName || user?.email?.split('@')[0]}
+                </span>
               </Link>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all ml-1"
+                title="Sign out"
+              >
+                <LogOut size={17} />
+              </button>
             </div>
           </div>
         </nav>
@@ -183,6 +210,13 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
                 {label}
               </Link>
             ))}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all mt-2"
+            >
+              <LogOut size={17} />
+              Sign Out
+            </button>
           </nav>
         </SlidePanel>
 
