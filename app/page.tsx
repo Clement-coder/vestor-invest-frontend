@@ -64,7 +64,7 @@ export default function Home() {
             <a href="#how" className="hover:text-white transition">How It Works</a>
             <Link href="/blog" className="hover:text-white transition">Blog</Link>
           </div>
-          <Link href={cta} className="px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold gradient-btn text-white transition hover:scale-[0.97]">
+          <Link href={cta} className="px-4 sm:px-5 py-2  text-sm font-semibold gradient-btn text-white transition hover:scale-[0.97]">
             {ctaLabel}
           </Link>
         </div>
@@ -74,14 +74,14 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-16 overflow-hidden">
         {/* Animated background orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00a8ff]/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#39ff9e]/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00a8ff]/10  blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#39ff9e]/8  blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5  blur-3xl animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
           {/* Floating particles */}
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-[#00a8ff]/60 rounded-full"
+              className="absolute w-1 h-1 bg-[#00a8ff]/60 "
               style={{
                 left: `${15 + i * 15}%`,
                 top: `${20 + (i % 3) * 25}%`,
@@ -98,7 +98,7 @@ export default function Home() {
             {[...Array(3)].flatMap((_, r) =>
               ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','MATIC','DOT','AVAX'].map((sym, i) => (
                 <div key={`${r}-${i}`} className="flex items-center gap-2 text-xs shrink-0">
-                  <img src={`https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${sym.toLowerCase()}.png`} alt={sym} width={14} height={14} className="w-3.5 h-3.5 rounded-full" />
+                  <img src={`https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${sym.toLowerCase()}.png`} alt={sym} width={14} height={14} className="w-3.5 h-3.5 " />
                   <span className="font-bold text-white/70">{sym}</span>
                 </div>
               ))
@@ -107,8 +107,8 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8 py-20 sm:py-28">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-[#39ff9e]/20 text-xs text-[#39ff9e] mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5  glass border border-[#39ff9e]/20 text-xs text-[#39ff9e] mb-2">
+            <span className="w-1.5 h-1.5  bg-[#39ff9e] animate-pulse" />
             Live · 180,000+ investors · $2.4B+ managed
           </div>
 
@@ -123,11 +123,11 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Link href={cta} className="group gradient-btn inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all hover:scale-[0.97] text-sm sm:text-base">
+            <Link href={cta} className="group gradient-btn inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold  transition-all hover:scale-[0.97] text-sm sm:text-base">
               {ctaLabel}
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <a href="#how" className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all text-sm sm:text-base font-medium">
+            <a href="#how" className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/15 text-white/80  hover:bg-white/5 hover:border-white/30 transition-all text-sm sm:text-base font-medium">
               How It Works
               <ChevronRight size={16} />
             </a>
@@ -151,7 +151,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-white">Live Market Prices</h2>
             <span className="flex items-center gap-1.5 text-xs text-[#39ff9e]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] animate-pulse" />
+              <span className="w-1.5 h-1.5  bg-[#39ff9e] animate-pulse" />
               Live · updates every 60s
             </span>
           </div>
@@ -170,7 +170,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f, i) => (
               <div key={i} className="glass p-6 rounded-2xl border border-white/10 hover:border-[#00a8ff]/40 transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg hover:shadow-[#00a8ff]/10">
-                <div className="w-12 h-12 rounded-xl bg-[#00a8ff]/10 border border-[#00a8ff]/20 flex items-center justify-center mb-4 group-hover:bg-[#00a8ff]/20 transition-colors">
+                <div className="w-12 h-12  bg-[#00a8ff]/10 border border-[#00a8ff]/20 flex items-center justify-center mb-4 group-hover:bg-[#00a8ff]/20 transition-colors">
                   <f.icon size={22} className="text-[#00a8ff]" />
                 </div>
                 <h3 className="text-white font-semibold mb-2 group-hover:text-[#00a8ff] transition-colors">{f.title}</h3>
@@ -203,7 +203,7 @@ export default function Home() {
             ))}
           </div>
           <div className="text-center mt-10">
-            <Link href={cta} className="inline-flex items-center gap-2 px-7 py-3.5 gradient-btn text-white font-semibold rounded-xl transition-all hover:scale-[0.97]">
+            <Link href={cta} className="inline-flex items-center gap-2 px-7 py-3.5 gradient-btn text-white font-semibold  transition-all hover:scale-[0.97]">
               {ctaLabel} <ArrowRight size={16} />
             </Link>
           </div>
@@ -241,7 +241,7 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={cta} className="block text-center py-2.5 rounded-xl text-sm font-semibold border transition-all hover:scale-105" style={{ borderColor: p.color + '40', color: p.color, backgroundColor: p.color + '10' }}>
+                  <Link href={cta} className="block text-center py-2.5  text-sm font-semibold border transition-all hover:scale-105" style={{ borderColor: p.color + '40', color: p.color, backgroundColor: p.color + '10' }}>
                     {ctaLabel}
                   </Link>
                 </div>
@@ -268,7 +268,7 @@ export default function Home() {
                 </div>
                 <p className="text-white/70 text-sm leading-relaxed mb-5">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#00a8ff] flex items-center justify-center text-xs font-bold text-[#0a0f25]">
+                  <div className="w-9 h-9  bg-[#00a8ff] flex items-center justify-center text-xs font-bold text-[#0a0f25]">
                     {t.avatar}
                   </div>
                   <div>
@@ -293,10 +293,10 @@ export default function Home() {
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Grow Your Wealth?</h2>
               <p className="text-white/60 mb-8 max-w-lg mx-auto">Join 180,000+ investors already earning with Vestor Invest. Start with as little as $100 — no experience needed.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href={cta} className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 gradient-btn text-white font-semibold rounded-xl transition-all hover:scale-[0.97]">
+                <Link href={cta} className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 gradient-btn text-white font-semibold  transition-all hover:scale-[0.97]">
                   {ctaLabel} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link href="/support" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all font-medium">
+                <Link href="/support" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-white/15 text-white/80  hover:bg-white/5 hover:border-white/30 transition-all font-medium">
                   Talk to Support
                 </Link>
               </div>
