@@ -1,4 +1,5 @@
 import { Logo } from '@/components/common/logo'
+import Link from 'next/link'
 import React from 'react'
 
 interface AuthLayoutProps {
@@ -10,32 +11,27 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Animated background shapes */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-neon-cyan/5 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-neon-green/5 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-blue-600/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+      {/* Background blobs */}
+      <div className="absolute top-0 left-0 w-64 sm:w-96 h-64 sm:h-96 bg-[#00a8ff]/6 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute bottom-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-[#39ff9e]/6 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
 
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-md py-8">
         {/* Logo */}
-        <div className="text-center mb-12">
-          <Logo size="lg" className="justify-center mb-8" />
-          {title && (
-            <h1 className="text-3xl font-bold text-white mb-2">{title}</h1>
-          )}
-          {subtitle && (
-            <p className="text-white/60">{subtitle}</p>
-          )}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block mb-6">
+            <Logo size="md" className="justify-center" />
+          </Link>
+          {title && <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">{title}</h1>}
+          {subtitle && <p className="text-white/50 text-sm sm:text-base">{subtitle}</p>}
         </div>
 
-        {/* Form Card */}
-        <div className="glass rounded-2xl p-8 border border-white/10 backdrop-blur-md shadow-glass-lg shadow-black/30">
+        {/* Card */}
+        <div className="glass rounded-2xl p-6 sm:p-8 border border-white/10 backdrop-blur-md shadow-xl shadow-black/30">
           {children}
         </div>
 
-        {/* Footer Text */}
-        <p className="text-center text-white/50 text-sm mt-8">
-          Secure crypto investing platform powered by advanced AI
+        <p className="text-center text-white/30 text-xs mt-6">
+          Secure crypto investing · Bank-level encryption
         </p>
       </div>
     </div>

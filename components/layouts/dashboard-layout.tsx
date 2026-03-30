@@ -70,8 +70,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Navigation variant="dashboard" />
 
       {/* Content */}
-      <main className="lg:ml-64 pt-20 px-4 lg:px-8 py-8">
-        {children}
+      <main className="lg:ml-64 pt-16 min-h-screen">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto lg:mx-0">
+          {children}
+        </div>
       </main>
     </div>
   )

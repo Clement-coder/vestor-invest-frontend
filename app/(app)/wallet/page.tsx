@@ -98,7 +98,7 @@ export default function WalletPage() {
           <h2 className="text-lg font-semibold text-white">Balance in All Currencies</h2>
           <span className="text-white/30 text-xs ml-auto">Live rates</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {currencies.map((cur) => {
             const converted = USD_BALANCE * cur.rate
             const formatted = cur.code === 'BTC' || cur.code === 'ETH'

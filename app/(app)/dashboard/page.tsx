@@ -68,27 +68,27 @@ export default function DashboardPage() {
   const [investmentModalOpen, setInvestmentModalOpen] = useState(false)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Portfolio Overview */}
       <div>
-        <h1 className="text-3xl font-bold text-white mb-8">Portfolio Overview</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6">Portfolio Overview</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <GlassCard variant="elevated" glow="cyan">
             <p className="text-white/60 text-sm mb-2">Total Balance</p>
-            <p className="text-4xl font-bold text-white">$12,450.50</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">$12,450.50</p>
             <p className="text-neon-green text-sm mt-2">+12.5% this month</p>
           </GlassCard>
 
           <GlassCard variant="elevated">
             <p className="text-white/60 text-sm mb-2">Portfolio Value</p>
-            <p className="text-4xl font-bold text-white">$45,230.00</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">$45,230.00</p>
             <p className="text-neon-cyan text-sm mt-2">+5.2% this year</p>
           </GlassCard>
 
           <GlassCard variant="elevated" glow="green">
             <p className="text-white/60 text-sm mb-2">Monthly Returns</p>
-            <p className="text-4xl font-bold text-white">$1,245.50</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">$1,245.50</p>
             <p className="text-neon-green text-sm mt-2">+18.3% growth</p>
           </GlassCard>
         </div>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
       {/* Investment Plans */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-6">Investment Plans</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {[
             {
               name: 'Starter',
