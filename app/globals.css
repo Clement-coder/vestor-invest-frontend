@@ -215,14 +215,14 @@ body {
   }
 
   .gradient-btn:hover {
-    box-shadow: 0 0 20px rgba(0, 168, 255, 0.4);
+    transform: scale(0.97);
   }
 
   /* Ripple Effect */
   .ripple {
     position: relative;
     overflow: hidden;
-  }
+  }the hover
 
   .ripple::after {
     content: '';

@@ -24,19 +24,16 @@ export function GlassButton({
         'focus:outline-none focus-visible:ring-0',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         // Size variants
-        size === 'sm' && 'px-3 py-1.5 text-xs',
-        size === 'md' && 'px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base',
-        size === 'lg' && 'px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-lg',
+        size === 'sm' && 'h-8 px-3 text-xs',
+        size === 'md' && 'h-10 px-6 text-sm sm:h-11 sm:text-base',
+        size === 'lg' && 'h-11 px-8 text-sm sm:h-13 sm:text-lg',
         // Style variants
         variant === 'primary' && [
           'gradient-btn text-white',
-          'hover:shadow-glow-cyan active:scale-95',
-          glow && 'shadow-glow-cyan',
         ],
         variant === 'secondary' && [
           'bg-[#39ff9e]/10 text-[#39ff9e] border border-[#39ff9e]/30',
           'hover:bg-[#39ff9e]/20 hover:border-[#39ff9e]/50',
-          glow && 'shadow-glow-green',
         ],
         variant === 'outline' && [
           'bg-transparent text-foreground border border-white/20',
@@ -46,7 +43,6 @@ export function GlassButton({
           'bg-transparent text-foreground',
           'hover:bg-white/10',
         ],
-        !disabled && 'active:scale-95',
         className
       )}
       disabled={disabled}
