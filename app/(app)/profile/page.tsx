@@ -67,7 +67,7 @@ export default function ProfilePage() {
 
       {/* Avatar & Name */}
       <GlassCard variant="elevated" className="flex items-center gap-6">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#00a8ff] to-[#39ff9e] flex items-center justify-center text-3xl font-bold text-white shrink-0 overflow-hidden">
+        <div className="w-20 h-20 rounded-full bg-[#00a8ff] flex items-center justify-center text-3xl font-bold text-white shrink-0 overflow-hidden">
           {user?.photoURL
             ? <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
             : initials}

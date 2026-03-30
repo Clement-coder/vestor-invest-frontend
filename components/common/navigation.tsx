@@ -167,7 +167,7 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
                 <Settings size={18} />
               </Link>
               <Link href="/profile" className="flex items-center gap-2 pl-2 ml-1 border-l border-white/10">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00a8ff] to-[#39ff9e] flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                <div className="w-8 h-8 rounded-full bg-[#00a8ff] flex items-center justify-center text-xs font-bold text-white overflow-hidden">
                   {user?.photoURL
                     ? <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
                     : initials}

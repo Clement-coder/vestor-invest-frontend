@@ -68,7 +68,7 @@ export default function Home() {
             <a href="#how" className="hover:text-white transition">How It Works</a>
             <Link href="/blog" className="hover:text-white transition">Blog</Link>
           </div>
-          <Link href="/signup" className="px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold gradient-btn text-white transition hover:shadow-lg hover:shadow-[#00a8ff]/30 hover:scale-105">
+          <Link href="/signup" className="px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold bg-[#00a8ff] hover:bg-[#0090dd] text-white transition hover:shadow-lg hover:shadow-[#00a8ff]/30 hover:scale-105">
             Get Started
           </Link>
         </div>
@@ -116,7 +116,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight">
-            <span className="text-gradient">Invest Smarter.</span>
+            <span className="text-white">Invest Smarter.</span>
             <br />
             <span className="text-white">Grow Faster.</span>
           </h1>
@@ -126,7 +126,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Link href="/signup" className="group inline-flex items-center gap-2 px-7 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105 text-sm sm:text-base">
+            <Link href="/signup" className="group inline-flex items-center gap-2 px-7 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105 text-sm sm:text-base">
               Start Investing Free
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -140,7 +140,7 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-12 border-t border-white/10 mt-4">
             {stats.map((s, i) => (
               <div key={i} className="text-center group">
-                <p className="text-2xl sm:text-3xl font-bold text-gradient-primary group-hover:scale-110 transition-transform inline-block">{s.value}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#00a8ff] group-hover:scale-110 transition-transform inline-block">{s.value}</p>
                 <p className="text-white/40 text-xs mt-1">{s.label}</p>
               </div>
             ))}
@@ -208,10 +208,10 @@ export default function Home() {
             {howItWorks.map((step, i) => (
               <div key={i} className="relative group">
                 {i < howItWorks.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-white/20 to-transparent z-10" />
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-white/10 z-10" />
                 )}
                 <div className="glass rounded-2xl p-6 border border-white/10 hover:border-[#39ff9e]/30 transition-all hover:-translate-y-1">
-                  <div className="text-3xl font-black text-gradient-primary mb-4 opacity-60">{step.step}</div>
+                  <div className="text-3xl font-black text-[#00a8ff] mb-4 opacity-60">{step.step}</div>
                   <h3 className="text-white font-semibold mb-2">{step.title}</h3>
                   <p className="text-white/50 text-sm leading-relaxed">{step.desc}</p>
                 </div>
@@ -219,7 +219,7 @@ export default function Home() {
             ))}
           </div>
           <div className="text-center mt-10">
-            <Link href="/signup" className="inline-flex items-center gap-2 px-7 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
+            <Link href="/signup" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
               Get Started Now <ArrowRight size={16} />
             </Link>
           </div>
@@ -238,7 +238,7 @@ export default function Home() {
             {plans.map((p, i) => (
               <div key={i} className={`glass rounded-2xl border transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group overflow-hidden ${p.popular ? 'border-[#39ff9e]/40 hover:shadow-[#39ff9e]/20' : 'border-white/10 hover:shadow-[#00a8ff]/10'}`}>
                 {p.popular && (
-                  <div className="bg-gradient-to-r from-[#00a8ff] to-[#39ff9e] text-center py-1.5 text-xs font-bold text-[#0a0f25]">
+                  <div className="bg-[#00a8ff] text-center py-1.5 text-xs font-bold text-[#0a0f25]">
                     MOST POPULAR
                   </div>
                 )}
@@ -284,7 +284,7 @@ export default function Home() {
                 </div>
                 <p className="text-white/70 text-sm leading-relaxed mb-5">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00a8ff] to-[#39ff9e] flex items-center justify-center text-xs font-bold text-[#0a0f25]">
+                  <div className="w-9 h-9 rounded-full bg-[#00a8ff] flex items-center justify-center text-xs font-bold text-[#0a0f25]">
                     {t.avatar}
                   </div>
                   <div>
@@ -302,14 +302,14 @@ export default function Home() {
       <section className="py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <div className="relative rounded-3xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00a8ff]/20 via-[#0a0f25] to-[#39ff9e]/20" />
+            <div className="absolute inset-0 bg-[#00a8ff]/5" />
             <div className="absolute inset-0 border border-white/10 rounded-3xl" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-gradient-to-r from-transparent via-[#00a8ff]/60 to-transparent" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-[#00a8ff]/30" />
             <div className="relative z-10 p-10 sm:p-16 text-center">
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Grow Your Wealth?</h2>
               <p className="text-white/60 mb-8 max-w-lg mx-auto">Join 180,000+ investors already earning with Vestor Invest. Start with as little as $100 — no experience needed.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup" className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
+                <Link href="/signup" className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#00a8ff] hover:bg-[#0090dd] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
                   Create Free Account <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link href="/support" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all font-medium">

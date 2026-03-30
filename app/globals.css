@@ -209,15 +209,13 @@ body {
     animation: floating 3s ease-in-out infinite;
   }
 
-  /* Gradient Button */
+  /* Button */
   .gradient-btn {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    background-size: 200% 200%;
-    animation: gradient-shift 3s ease infinite;
+    background: var(--primary);
   }
 
   .gradient-btn:hover {
-    animation: gradient-shift 2s ease infinite;
+    background: #0090dd;
   }
 
   /* Ripple Effect */
@@ -244,19 +242,13 @@ body {
     animation: ripple 0.6s ease-out;
   }
 
-  /* Text Gradient */
+  /* Text colors (no gradient) */
   .text-gradient {
-    background: linear-gradient(135deg, #ffffff 0%, #00a8ff 50%, #39ff9e 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #ffffff;
   }
 
   .text-gradient-primary {
-    background: linear-gradient(135deg, #00a8ff 0%, #1e90ff 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--primary);
   }
 
   /* Focus Glow */

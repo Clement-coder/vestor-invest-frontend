@@ -123,7 +123,7 @@ export default function PlansPage() {
             {/* APY */}
             <div className="mb-6">
               <p className="text-white/60 text-sm">Annual Yield</p>
-              <p className="text-3xl font-bold text-gradient-primary">{plan.apy}</p>
+              <p className="text-3xl font-bold text-[#00a8ff]">{plan.apy}</p>
             </div>
 
             {/* Investment Range */}

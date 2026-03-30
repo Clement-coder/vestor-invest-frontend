@@ -23,7 +23,7 @@ export default function BlogPage() {
       <nav className="glass fixed top-0 left-0 right-0 z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/"><Logo size="sm" /></Link>
-          <Link href="/signup" className="px-4 py-2 rounded-lg text-sm font-semibold gradient-btn text-white">Get Started</Link>
+          <Link href="/signup" className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#00a8ff] hover:bg-[#0090dd] text-white">Get Started</Link>
         </div>
       </nav>
 
@@ -36,7 +36,7 @@ export default function BlogPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {posts.map((post, i) => (
             <div key={i} className="glass rounded-xl border border-white/10 hover:border-[#00a8ff]/30 transition-all duration-300 hover:-translate-y-1 overflow-hidden group cursor-pointer">
-              <div className="h-2 w-full bg-gradient-to-r from-[#00a8ff] to-[#39ff9e]" />
+              <div className="h-2 w-full bg-[#00a8ff]" />
               <div className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${categoryColor[post.category]}`}>{post.category}</span>

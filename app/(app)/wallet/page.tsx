@@ -51,7 +51,7 @@ export default function WalletPage() {
 
       {/* Main Balance */}
       <GlassCard variant="elevated" className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00a8ff]/10 to-[#39ff9e]/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-[#00a8ff]/5 pointer-events-none" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">

@@ -27,7 +27,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           {(isLogin || pathname === '/signup') && (
             <Link
               href={isLogin ? '/signup' : '/login'}
-              className="px-4 py-2 rounded-lg text-sm font-semibold gradient-btn text-white transition"
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#00a8ff] hover:bg-[#0090dd] text-white transition"
             >
               {isLogin ? 'Sign Up' : 'Sign In'}
             </Link>

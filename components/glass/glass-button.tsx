@@ -29,13 +29,13 @@ export function GlassButton({
         size === 'lg' && 'px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-lg',
         // Style variants
         variant === 'primary' && [
-          'bg-gradient-to-r from-neon-cyan via-blue-600 to-neon-green text-white',
-          'hover:shadow-glow-cyan active:scale-95',
+          'bg-[#00a8ff] text-white',
+          'hover:bg-[#0090dd] active:scale-95',
           glow && 'shadow-glow-cyan',
         ],
         variant === 'secondary' && [
-          'bg-neon-green/10 text-neon-green border border-neon-green/30',
-          'hover:bg-neon-green/20 hover:border-neon-green/50 hover:shadow-glow-green',
+          'bg-[#39ff9e]/10 text-[#39ff9e] border border-[#39ff9e]/30',
+          'hover:bg-[#39ff9e]/20 hover:border-[#39ff9e]/50',
           glow && 'shadow-glow-green',
         ],
         variant === 'outline' && [
