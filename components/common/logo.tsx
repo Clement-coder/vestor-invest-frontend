@@ -19,7 +19,7 @@ export function Logo({ size = 'md', className }: LogoProps) {
       <Image src="/VestorLog.png" alt="Vestor Invest" width={w} height={h} className="object-contain" />
       <div className={cn('font-bold', text)}>
         <span className="text-white">Vestor</span>
-        <span className="text-gradient-primary"> INVEST</span>
+        <span className="text-gradient-primary hidden sm:inline"> INVEST</span>
       </div>
     </div>
   )
