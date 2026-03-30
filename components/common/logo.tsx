@@ -8,9 +8,9 @@ interface LogoProps {
 
 export function Logo({ size = 'md', className }: LogoProps) {
   const sizeMap = {
-    sm: 'text-xl',
-    md: 'text-2xl',
-    lg: 'text-4xl',
+    sm: 'text-base sm:text-xl',
+    md: 'text-xl sm:text-2xl',
+    lg: 'text-2xl sm:text-4xl',
   }
 
   return (

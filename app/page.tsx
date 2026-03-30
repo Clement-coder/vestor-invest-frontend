@@ -54,21 +54,21 @@ export default function Home() {
             Live trading · 180,000+ investors
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold leading-tight">
+          <h1 className="text-3xl sm:text-6xl md:text-7xl font-bold leading-tight">
             <span className="text-gradient">The Future of</span>
             <br />
             <span className="text-white">Crypto Investing</span>
           </h1>
 
-          <p className="text-base sm:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
             Experience seamless cryptocurrency investing with AI-powered insights, real-time analytics, and bank-level security.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4">
-            <Link href="/signup" className="px-8 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00a8ff]/30 transition text-base">
+            <Link href="/signup" className="px-6 sm:px-8 py-3 sm:py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00a8ff]/30 transition text-sm sm:text-base">
               Start Investing Free
             </Link>
-            <Link href="/login" className="px-8 py-3.5 border border-white/20 text-white rounded-xl hover:bg-white/5 transition font-semibold text-base">
+            <Link href="/login" className="px-6 sm:px-8 py-3 sm:py-3.5 border border-white/20 text-white rounded-xl hover:bg-white/5 transition font-semibold text-sm sm:text-base">
               View Dashboard →
             </Link>
           </div>
