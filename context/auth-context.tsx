@@ -26,8 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Handle Google redirect result
     getGoogleRedirectResult().then((result) => {
       if (result?.user) {
-        const isNew = result.user.metadata.creationTime === result.user.metadata.lastSignInTime
-        router.push(isNew ? '/onboarding' : '/dashboard')
+        router.push('/dashboard')
       }
     }).catch(() => {})
 
