@@ -211,7 +211,7 @@ body {
 
   /* Button */
   .gradient-btn {
-    background: linear-gradient(135deg, #00a8ff 0%, #0066cc 50%, #39ff9e 100%);
+    background: linear-gradient(135deg, #0a0f25 0%, #00a8ff 50%, #0a0f25 100%);
     background-size: 200% 200%;
     background-position: 0% 50%;
     transition: background-position 0.4s ease, box-shadow 0.3s ease;
