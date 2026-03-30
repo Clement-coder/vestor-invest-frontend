@@ -29,9 +29,10 @@ export function GlassButton({
         size === 'lg' && 'px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-lg',
         // Style variants
         variant === 'primary' && [
-          'bg-[#00a8ff] text-white',
-          'hover:bg-[#0090dd] active:scale-95',
-          glow && 'shadow-glow-cyan',
+          'bg-gradient-to-r from-[#00a8ff] via-blue-600 to-[#39ff9e] text-white bg-[length:200%_100%] bg-left',
+          'hover:bg-right hover:shadow-[0_0_20px_rgba(0,168,255,0.4)] active:scale-95',
+          'transition-all duration-400',
+          glow && 'shadow-[0_0_20px_rgba(0,168,255,0.4)]',
         ],
         variant === 'secondary' && [
           'bg-[#39ff9e]/10 text-[#39ff9e] border border-[#39ff9e]/30',
