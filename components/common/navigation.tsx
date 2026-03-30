@@ -178,7 +178,7 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
               </Link>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all ml-1"
+                className="hidden sm:flex p-2 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all ml-1"
                 title="Sign out"
               >
                 <LogOut size={17} />
