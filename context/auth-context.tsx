@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User, onAuthStateChanged } from 'firebase/auth'
 import { getFirebase } from '@/lib/firebase'
 import { getGoogleRedirectResult } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
   user: User | null
@@ -17,12 +18,18 @@ export const useAuth = () => useContext(AuthContext)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     const { auth } = getFirebase()
 
     // Handle Google redirect result
-    getGoogleRedirectResult().catch(() => {})
+    getGoogleRedirectResult().then((result) => {
+      if (result?.user) {
+        const isNew = result.user.metadata.creationTime === result.user.metadata.lastSignInTime
+        router.push(isNew ? '/onboarding' : '/dashboard')
+      }
+    }).catch(() => {})
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)

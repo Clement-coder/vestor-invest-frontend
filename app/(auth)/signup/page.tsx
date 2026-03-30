@@ -71,15 +71,9 @@ export default function SignupPage() {
   const handleGoogle = async () => {
     setIsLoading(true)
     try {
-      const result = await signInWithGoogle()
-      const isNew = result.user.metadata.creationTime === result.user.metadata.lastSignInTime
-      router.push(isNew ? '/onboarding' : '/dashboard')
+      await signInWithGoogle()
     } catch (err) {
-      const code = (err as FirebaseError).code
-      if (code !== 'auth/popup-closed-by-user') {
-        setErrors({ submit: 'Google sign-in failed. Make sure popups are allowed.' })
-      }
-    } finally {
+      setErrors({ submit: 'Google sign-in failed. Please try again.' })
       setIsLoading(false)
     }
   }

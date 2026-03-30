@@ -54,13 +54,8 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       await signInWithGoogle()
-      router.push('/dashboard')
     } catch (err) {
-      const code = (err as FirebaseError).code
-      if (code !== 'auth/popup-closed-by-user') {
-        setErrors({ submit: 'Google sign-in failed. Make sure popups are allowed.' })
-      }
-    } finally {
+      setErrors({ submit: 'Google sign-in failed. Please try again.' })
       setIsLoading(false)
     }
   }
