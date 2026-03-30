@@ -20,7 +20,7 @@ export function GlassButton({
   return (
     <button
       className={cn(
-        'rounded-lg font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2',
+        'font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2',
         'focus:outline-none focus-visible:ring-0',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         // Size variants

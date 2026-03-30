@@ -211,7 +211,8 @@ body {
 
   /* Button */
   .gradient-btn {
-    background: linear-gradient(to right, #000000, #2563eb, #000000);
+    background: linear-gradient(to right, #0a0f25, #2563eb, #0a0f25);
+    border-radius: 0 !important;
   }
 
   .gradient-btn:hover {
