@@ -1,84 +1,174 @@
+'use client'
+
 import Link from 'next/link'
 import { Logo } from '@/components/common/logo'
+import {
+  TrendingUp, Shield, Zap, BarChart2, Globe, Lock,
+  ArrowRight, Star, ChevronRight, Cpu, Wallet, Bell,
+  CheckCircle, Users, DollarSign, Activity,
+} from 'lucide-react'
 
-const features = [
-  { icon: '🤖', title: 'AI-Powered Insights', desc: 'Advanced algorithms analyze market trends in real-time to maximize your returns.' },
-  { icon: '📊', title: 'Real-Time Analytics', desc: 'Track your portfolio performance with live charts and detailed breakdowns.' },
-  { icon: '🔐', title: 'Bank-Level Security', desc: 'Your assets are protected with military-grade encryption and 2FA.' },
-  { icon: '💰', title: 'Multiple Plans', desc: 'From Starter to Exclusive — investment plans for every budget.' },
-  { icon: '⚡', title: 'Instant Transactions', desc: 'Deposit and withdraw funds instantly with zero hidden fees.' },
-  { icon: '🌍', title: 'Multi-Currency', desc: 'View your balance in 10+ currencies including BTC and ETH.' },
+const coins = [
+  { symbol: 'BTC', name: 'Bitcoin', price: '$67,432.10', change: '+2.4%', up: true, color: '#F7931A' },
+  { symbol: 'ETH', name: 'Ethereum', price: '$3,521.80', change: '+1.8%', up: true, color: '#627EEA' },
+  { symbol: 'BNB', name: 'BNB', price: '$412.50', change: '-0.6%', up: false, color: '#F3BA2F' },
+  { symbol: 'SOL', name: 'Solana', price: '$178.90', change: '+5.2%', up: true, color: '#9945FF' },
+  { symbol: 'XRP', name: 'XRP', price: '$0.6120', change: '+3.1%', up: true, color: '#00AAE4' },
+  { symbol: 'ADA', name: 'Cardano', price: '$0.4830', change: '-1.2%', up: false, color: '#0033AD' },
 ]
 
-const stats = [
-  { value: '$2.4B+', label: 'Assets Under Management' },
-  { value: '180K+', label: 'Active Investors' },
-  { value: '99.9%', label: 'Uptime Guarantee' },
-  { value: '42%', label: 'Avg. Annual Return' },
+const features = [
+  { icon: Cpu, title: 'AI-Powered Insights', desc: 'Advanced algorithms analyze market trends 24/7 to maximize your returns and minimize risk exposure.' },
+  { icon: BarChart2, title: 'Real-Time Analytics', desc: 'Live portfolio tracking with interactive charts, P&L breakdowns, and performance benchmarks.' },
+  { icon: Shield, title: 'Bank-Level Security', desc: 'Military-grade encryption, cold storage, and multi-factor authentication protect every asset.' },
+  { icon: DollarSign, title: 'Multiple Plans', desc: 'From Starter to Exclusive — tiered investment plans designed for every budget and goal.' },
+  { icon: Zap, title: 'Instant Transactions', desc: 'Deposit and withdraw funds instantly with zero hidden fees and real-time confirmations.' },
+  { icon: Globe, title: 'Multi-Currency', desc: 'Invest across 50+ cryptocurrencies and view your balance in 10+ fiat currencies.' },
 ]
 
 const plans = [
-  { name: 'Starter', apy: '8.5%', min: '$100', color: '#00a8ff' },
-  { name: 'Growth', apy: '12.5%', min: '$1,000', color: '#39ff9e', popular: true },
-  { name: 'Premium', apy: '16.5%', min: '$10,000', color: '#00a8ff' },
-  { name: 'Exclusive', apy: '20.5%', min: '$100,000', color: '#39ff9e' },
+  { name: 'Starter', apy: '8.5%', min: '$100', max: '$999', color: '#00a8ff', features: ['Daily returns', 'Basic analytics', 'Email support'] },
+  { name: 'Growth', apy: '12.5%', min: '$1,000', max: '$9,999', color: '#39ff9e', popular: true, features: ['Daily returns', 'Advanced analytics', 'Priority support', 'Auto-reinvest'] },
+  { name: 'Premium', apy: '16.5%', min: '$10,000', max: '$99,999', color: '#00a8ff', features: ['Daily returns', 'Full analytics suite', '24/7 support', 'Auto-reinvest', 'Dedicated manager'] },
+  { name: 'Exclusive', apy: '20.5%', min: '$100,000', max: 'Unlimited', color: '#39ff9e', features: ['Daily returns', 'Custom analytics', 'VIP support', 'Auto-reinvest', 'Personal advisor', 'Custom strategies'] },
+]
+
+const testimonials = [
+  { name: 'Michael Chen', role: 'Software Engineer', text: 'I\'ve tried multiple crypto platforms but Vestor Invest stands out. The Growth plan has consistently delivered above the promised APY. My portfolio is up 34% in 8 months.', rating: 5, avatar: 'MC' },
+  { name: 'Sarah Williams', role: 'Financial Analyst', text: 'The analytics dashboard is incredibly detailed. I can track every investment in real-time. The AI insights have helped me make smarter allocation decisions.', rating: 5, avatar: 'SW' },
+  { name: 'James Okafor', role: 'Entrepreneur', text: 'Started with the Starter plan, now on Premium. The auto-reinvest feature is a game changer — my returns compound automatically without lifting a finger.', rating: 5, avatar: 'JO' },
+  { name: 'Priya Sharma', role: 'Doctor', text: 'As someone with no crypto background, the platform made it incredibly easy to start. The support team walked me through everything. Best investment decision I\'ve made.', rating: 5, avatar: 'PS' },
+]
+
+const stats = [
+  { value: '$2.4B+', label: 'Assets Under Management', icon: DollarSign },
+  { value: '180K+', label: 'Active Investors', icon: Users },
+  { value: '99.9%', label: 'Uptime Guarantee', icon: Activity },
+  { value: '42%', label: 'Avg. Annual Return', icon: TrendingUp },
+]
+
+const howItWorks = [
+  { step: '01', title: 'Create Your Account', desc: 'Sign up in under 2 minutes with email or Google. No KYC required for starter plans.' },
+  { step: '02', title: 'Choose a Plan', desc: 'Browse our tiered investment plans and select one that matches your goals and budget.' },
+  { step: '03', title: 'Fund & Invest', desc: 'Deposit crypto or fiat, confirm your investment, and watch your portfolio grow daily.' },
+  { step: '04', title: 'Track & Withdraw', desc: 'Monitor real-time performance and withdraw anytime with zero lock-in periods.' },
 ]
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0a0f25] text-white overflow-x-hidden">
+
       {/* Navigation */}
-      <nav className="glass fixed top-0 left-0 right-0 z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <nav className="glass fixed top-0 left-0 right-0 z-50 border-b border-white/10 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
           <Logo size="sm" />
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link href="/login" className="px-3 sm:px-5 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition">
-              Login
-            </Link>
-            <Link href="/signup" className="px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold gradient-btn text-white transition">
-              Get Started
-            </Link>
+          <div className="hidden md:flex items-center gap-6 text-sm text-white/60">
+            <a href="#features" className="hover:text-white transition">Features</a>
+            <a href="#plans" className="hover:text-white transition">Plans</a>
+            <a href="#how" className="hover:text-white transition">How It Works</a>
+            <Link href="/blog" className="hover:text-white transition">Blog</Link>
           </div>
+          <Link href="/signup" className="px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold gradient-btn text-white transition hover:shadow-lg hover:shadow-[#00a8ff]/30 hover:scale-105">
+            Get Started
+          </Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-20">
-        <div className="absolute top-20 left-0 w-72 sm:w-96 h-72 sm:h-96 bg-[#00a8ff]/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-[#39ff9e]/8 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl" />
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-16 overflow-hidden">
+        {/* Animated background orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00a8ff]/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#39ff9e]/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+          {/* Floating particles */}
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-[#00a8ff]/60 rounded-full"
+              style={{
+                left: `${15 + i * 15}%`,
+                top: `${20 + (i % 3) * 25}%`,
+                animation: `floating ${3 + i}s ease-in-out infinite`,
+                animationDelay: `${i * 0.5}s`,
+              }}
+            />
+          ))}
+        </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8 py-16 sm:py-24">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/10 text-sm text-white/70 mb-4">
-            <span className="w-2 h-2 rounded-full bg-[#39ff9e] animate-pulse" />
-            Live trading · 180,000+ investors
+        {/* Infinite scrolling coin ticker */}
+        <div className="absolute top-16 left-0 right-0 overflow-hidden border-b border-white/5 bg-white/[0.02] py-2">
+          <div className="flex gap-8 animate-[ticker_30s_linear_infinite] whitespace-nowrap">
+            {[...coins, ...coins, ...coins].map((coin, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs shrink-0">
+                <span className="font-bold text-white/80">{coin.symbol}</span>
+                <span className="text-white/50">{coin.price}</span>
+                <span className={coin.up ? 'text-[#39ff9e]' : 'text-red-400'}>{coin.change}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8 py-20 sm:py-28">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-[#39ff9e]/20 text-xs text-[#39ff9e] mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] animate-pulse" />
+            Live · 180,000+ investors · $2.4B+ managed
           </div>
 
-          <h1 className="text-3xl sm:text-6xl md:text-7xl font-bold leading-tight">
-            <span className="text-gradient">The Future of</span>
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight">
+            <span className="text-gradient">Invest Smarter.</span>
             <br />
-            <span className="text-white">Crypto Investing</span>
+            <span className="text-white">Grow Faster.</span>
           </h1>
 
-          <p className="text-sm sm:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
-            Experience seamless cryptocurrency investing with AI-powered insights, real-time analytics, and bank-level security.
+          <p className="text-sm sm:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
+            The most advanced crypto investment platform. AI-powered insights, real-time analytics, and plans starting at just $100.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4">
-            <Link href="/signup" className="px-6 sm:px-8 py-3 sm:py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00a8ff]/30 transition text-sm sm:text-base">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <Link href="/signup" className="group inline-flex items-center gap-2 px-7 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105 text-sm sm:text-base">
               Start Investing Free
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link href="/login" className="px-6 sm:px-8 py-3 sm:py-3.5 border border-white/20 text-white rounded-xl hover:bg-white/5 transition font-semibold text-sm sm:text-base">
-              View Dashboard →
-            </Link>
+            <a href="#how" className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all text-sm sm:text-base font-medium">
+              How It Works
+              <ChevronRight size={16} />
+            </a>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-12 sm:pt-16 border-t border-white/10 mt-8">
+          {/* Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-12 border-t border-white/10 mt-4">
             {stats.map((s, i) => (
-              <div key={i} className="text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-gradient-primary">{s.value}</p>
-                <p className="text-white/50 text-xs sm:text-sm mt-1">{s.label}</p>
+              <div key={i} className="text-center group">
+                <p className="text-2xl sm:text-3xl font-bold text-gradient-primary group-hover:scale-110 transition-transform inline-block">{s.value}</p>
+                <p className="text-white/40 text-xs mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Market Prices */}
+      <section className="py-12 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-white">Live Market Prices</h2>
+            <span className="flex items-center gap-1.5 text-xs text-[#39ff9e]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] animate-pulse" />
+              Live
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {coins.map((coin, i) => (
+              <div key={i} className="glass rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all hover:-translate-y-0.5 group">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: coin.color + '20', color: coin.color }}>
+                    {coin.symbol.slice(0, 2)}
+                  </div>
+                  <span className={`text-xs font-semibold ${coin.up ? 'text-[#39ff9e]' : 'text-red-400'}`}>{coin.change}</span>
+                </div>
+                <p className="text-white font-bold text-sm">{coin.price}</p>
+                <p className="text-white/40 text-xs mt-0.5">{coin.name}</p>
               </div>
             ))}
           </div>
@@ -86,50 +176,124 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
+      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gradient mb-4">Everything You Need</h2>
-            <p className="text-white/60 text-base sm:text-lg max-w-xl mx-auto">A complete platform built for serious crypto investors.</p>
+            <p className="text-[#00a8ff] text-sm font-semibold uppercase tracking-widest mb-3">Why Vestor Invest</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Everything You Need to Succeed</h2>
+            <p className="text-white/50 max-w-xl mx-auto">A complete investment platform built for both beginners and seasoned crypto investors.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f, i) => (
-              <div key={i} className="glass p-6 rounded-xl border border-white/10 hover:border-[#00a8ff]/40 transition-all duration-300 group">
-                <div className="text-3xl mb-4">{f.icon}</div>
-                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-[#00a8ff] transition-colors">{f.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{f.desc}</p>
+              <div key={i} className="glass p-6 rounded-2xl border border-white/10 hover:border-[#00a8ff]/40 transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg hover:shadow-[#00a8ff]/10">
+                <div className="w-12 h-12 rounded-xl bg-[#00a8ff]/10 border border-[#00a8ff]/20 flex items-center justify-center mb-4 group-hover:bg-[#00a8ff]/20 transition-colors">
+                  <f.icon size={22} className="text-[#00a8ff]" />
+                </div>
+                <h3 className="text-white font-semibold mb-2 group-hover:text-[#00a8ff] transition-colors">{f.title}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Plans preview */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
+      {/* How It Works */}
+      <section id="how" className="py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Investment Plans</h2>
-            <p className="text-white/60 text-base sm:text-lg">Choose a plan that fits your goals.</p>
+            <p className="text-[#39ff9e] text-sm font-semibold uppercase tracking-widest mb-3">Simple Process</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Start in 4 Easy Steps</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {plans.map((p, i) => (
-              <div key={i} className={`glass p-6 rounded-xl border transition-all duration-300 hover:-translate-y-1 ${p.popular ? 'border-[#39ff9e]/40' : 'border-white/10'}`}>
-                {p.popular && (
-                  <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-[#39ff9e]/20 text-[#39ff9e] border border-[#39ff9e]/30 mb-3">
-                    Most Popular
-                  </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {howItWorks.map((step, i) => (
+              <div key={i} className="relative group">
+                {i < howItWorks.length - 1 && (
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-white/20 to-transparent z-10" />
                 )}
-                <h3 className="text-lg font-bold text-white mb-1">{p.name}</h3>
-                <p className="text-3xl font-bold mb-1" style={{ color: p.color }}>{p.apy}</p>
-                <p className="text-white/40 text-xs mb-4">Annual Yield</p>
-                <p className="text-white/60 text-sm">From <span className="text-white font-medium">{p.min}</span></p>
+                <div className="glass rounded-2xl p-6 border border-white/10 hover:border-[#39ff9e]/30 transition-all hover:-translate-y-1">
+                  <div className="text-3xl font-black text-gradient-primary mb-4 opacity-60">{step.step}</div>
+                  <h3 className="text-white font-semibold mb-2">{step.title}</h3>
+                  <p className="text-white/50 text-sm leading-relaxed">{step.desc}</p>
+                </div>
               </div>
             ))}
           </div>
-          <div className="text-center mt-8">
-            <Link href="/signup" className="inline-block px-8 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00a8ff]/30 transition">
-              View All Plans
+          <div className="text-center mt-10">
+            <Link href="/signup" className="inline-flex items-center gap-2 px-7 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
+              Get Started Now <ArrowRight size={16} />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Plans */}
+      <section id="plans" className="py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-[#00a8ff] text-sm font-semibold uppercase tracking-widest mb-3">Investment Plans</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Choose Your Growth Path</h2>
+            <p className="text-white/50 max-w-xl mx-auto">Transparent returns, no hidden fees. Upgrade or downgrade anytime.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {plans.map((p, i) => (
+              <div key={i} className={`glass rounded-2xl border transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group overflow-hidden ${p.popular ? 'border-[#39ff9e]/40 hover:shadow-[#39ff9e]/20' : 'border-white/10 hover:shadow-[#00a8ff]/10'}`}>
+                {p.popular && (
+                  <div className="bg-gradient-to-r from-[#00a8ff] to-[#39ff9e] text-center py-1.5 text-xs font-bold text-[#0a0f25]">
+                    MOST POPULAR
+                  </div>
+                )}
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-1">{p.name}</h3>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className="text-4xl font-black" style={{ color: p.color }}>{p.apy}</span>
+                    <span className="text-white/40 text-sm mb-1">APY</span>
+                  </div>
+                  <p className="text-white/40 text-xs mb-5">${p.min} – {p.max}</p>
+                  <ul className="space-y-2 mb-6">
+                    {p.features.map((feat, j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm text-white/70">
+                        <CheckCircle size={14} style={{ color: p.color }} className="shrink-0" />
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/signup" className="block text-center py-2.5 rounded-xl text-sm font-semibold border transition-all hover:scale-105" style={{ borderColor: p.color + '40', color: p.color, backgroundColor: p.color + '10' }}>
+                    Get Started
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-[#39ff9e] text-sm font-semibold uppercase tracking-widest mb-3">Testimonials</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Trusted by 180,000+ Investors</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {testimonials.map((t, i) => (
+              <div key={i} className="glass rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1">
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(t.rating)].map((_, j) => (
+                    <Star key={j} size={14} className="text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-white/70 text-sm leading-relaxed mb-5">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00a8ff] to-[#39ff9e] flex items-center justify-center text-xs font-bold text-[#0a0f25]">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">{t.name}</p>
+                    <p className="text-white/40 text-xs">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -137,17 +301,19 @@ export default function Home() {
       {/* CTA */}
       <section className="py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="glass rounded-2xl p-8 sm:p-14 text-center border border-white/10 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00a8ff]/5 to-[#39ff9e]/5 pointer-events-none" />
-            <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to grow your wealth?</h2>
-              <p className="text-white/60 text-base sm:text-lg mb-8 max-w-xl mx-auto">Join 180,000+ investors already earning with Vestor Invest. Start with as little as $100.</p>
+          <div className="relative rounded-3xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#00a8ff]/20 via-[#0a0f25] to-[#39ff9e]/20" />
+            <div className="absolute inset-0 border border-white/10 rounded-3xl" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-gradient-to-r from-transparent via-[#00a8ff]/60 to-transparent" />
+            <div className="relative z-10 p-10 sm:p-16 text-center">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Grow Your Wealth?</h2>
+              <p className="text-white/60 mb-8 max-w-lg mx-auto">Join 180,000+ investors already earning with Vestor Invest. Start with as little as $100 — no experience needed.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup" className="px-8 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#00a8ff]/30 transition">
-                  Create Free Account
+                <Link href="/signup" className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 gradient-btn text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#00a8ff]/30 transition-all hover:scale-105">
+                  Create Free Account <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link href="/login" className="px-8 py-3.5 border border-white/20 text-white rounded-xl hover:bg-white/5 transition font-semibold">
-                  Sign In
+                <Link href="/support" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-white/15 text-white/80 rounded-xl hover:bg-white/5 hover:border-white/30 transition-all font-medium">
+                  Talk to Support
                 </Link>
               </div>
             </div>
@@ -156,20 +322,54 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-10 px-4 sm:px-6">
+      <footer className="border-t border-white/10 py-12 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Logo size="sm" />
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-white/50">
-              <a href="#" className="hover:text-white transition">Privacy</a>
-              <a href="#" className="hover:text-white transition">Terms</a>
-              <a href="#" className="hover:text-white transition">Support</a>
-              <a href="#" className="hover:text-white transition">Blog</a>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 mb-10">
+            <div>
+              <Logo size="sm" className="mb-4" />
+              <p className="text-white/40 text-sm leading-relaxed">The most advanced crypto investment platform. Trusted by 180,000+ investors worldwide.</p>
             </div>
-            <p className="text-white/30 text-sm">© 2025 Vestor Invest</p>
+            <div>
+              <p className="text-white font-semibold text-sm mb-3">Platform</p>
+              <ul className="space-y-2 text-sm text-white/50">
+                <li><a href="#features" className="hover:text-white transition">Features</a></li>
+                <li><a href="#plans" className="hover:text-white transition">Plans</a></li>
+                <li><a href="#how" className="hover:text-white transition">How It Works</a></li>
+                <li><Link href="/dashboard" className="hover:text-white transition">Dashboard</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm mb-3">Company</p>
+              <ul className="space-y-2 text-sm text-white/50">
+                <li><Link href="/blog" className="hover:text-white transition">Blog</Link></li>
+                <li><Link href="/support" className="hover:text-white transition">Support</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition">Terms</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm mb-3">Security</p>
+              <ul className="space-y-2 text-sm text-white/50">
+                <li className="flex items-center gap-2"><Lock size={12} /> 256-bit SSL Encryption</li>
+                <li className="flex items-center gap-2"><Shield size={12} /> Cold Storage Assets</li>
+                <li className="flex items-center gap-2"><Bell size={12} /> 24/7 Monitoring</li>
+                <li className="flex items-center gap-2"><Wallet size={12} /> Multi-sig Wallets</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-white/30 text-xs">© 2026 Vestor Invest. All rights reserved.</p>
+            <p className="text-white/20 text-xs">Crypto investments carry risk. Past performance does not guarantee future results.</p>
           </div>
         </div>
       </footer>
+
+      <style jsx>{`
+        @keyframes ticker {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.33%); }
+        }
+      `}</style>
     </div>
   )
 }
