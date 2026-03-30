@@ -6,12 +6,20 @@ import {
   getRedirectResult,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { getFirebase } from './firebase'
 
 export const signUpWithEmail = (email: string, password: string) => {
   const { auth } = getFirebase()
   return createUserWithEmailAndPassword(auth, email, password)
+}
+
+export const sendVerificationEmail = () => {
+  const { auth } = getFirebase()
+  const user = auth.currentUser
+  if (!user) throw new Error('No user')
+  return sendEmailVerification(user)
 }
 
 export const signInWithEmail = (email: string, password: string) => {

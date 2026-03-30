@@ -7,7 +7,7 @@ import { updateProfile } from 'firebase/auth'
 import { AuthLayout } from '@/components/layouts/auth-layout'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
-import { signUpWithEmail, signInWithGoogle } from '@/lib/auth'
+import { signUpWithEmail, signInWithGoogle, sendVerificationEmail } from '@/lib/auth'
 import { FirebaseError } from 'firebase/app'
 import { Mail, Lock, User, CheckCircle2, XCircle } from 'lucide-react'
 
@@ -58,7 +58,8 @@ export default function SignupPage() {
     try {
       const { user } = await signUpWithEmail(formData.email, formData.password)
       await updateProfile(user, { displayName: formData.fullName.trim() })
-      router.push('/onboarding')
+      await sendVerificationEmail()
+      router.push('/verify-email')
     } catch (err) {
       const code = (err as FirebaseError).code
       setErrors({ submit: code === 'auth/email-already-in-use' ? 'This email is already registered' : 'Failed to create account. Try again.' })
