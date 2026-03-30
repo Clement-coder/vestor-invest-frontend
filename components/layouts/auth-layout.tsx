@@ -13,16 +13,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Navbar */}
       <nav className="glass fixed top-0 left-0 right-0 z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center">
           <Link href="/"><Logo size="sm" /></Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="px-3 sm:px-5 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition">
-              Login
-            </Link>
-            <Link href="/signup" className="px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold gradient-btn text-white transition">
-              Sign Up
-            </Link>
-          </div>
         </div>
       </nav>
       {/* Background blobs */}
