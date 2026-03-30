@@ -2,6 +2,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   sendPasswordResetEmail,
 } from 'firebase/auth'
@@ -17,9 +19,24 @@ export const signInWithEmail = (email: string, password: string) => {
   return signInWithEmailAndPassword(auth, email, password)
 }
 
-export const signInWithGoogle = () => {
+export const signInWithGoogle = async () => {
   const { auth, googleProvider } = getFirebase()
-  return signInWithPopup(auth, googleProvider)
+  try {
+    // Try popup first (works on desktop)
+    return await signInWithPopup(auth, googleProvider)
+  } catch (err: any) {
+    // Fall back to redirect for mobile/popup-blocked environments
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+      await signInWithRedirect(auth, googleProvider)
+      return null
+    }
+    throw err
+  }
+}
+
+export const getGoogleRedirectResult = () => {
+  const { auth } = getFirebase()
+  return getRedirectResult(auth)
 }
 
 export const logOut = () => {
