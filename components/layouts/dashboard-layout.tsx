@@ -40,7 +40,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-screen w-64 border-r border-white/10 glass z-50">
         <div className="p-6 border-b border-white/10">
-          <Link href="/dashboard">
+          <Link href="/">
             <Logo size="sm" />
           </Link>
         </div>

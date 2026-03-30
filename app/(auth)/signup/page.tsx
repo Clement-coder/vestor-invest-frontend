@@ -25,11 +25,19 @@ function getPasswordStrength(password: string) {
 const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong']
 const strengthColor = ['', 'bg-red-500', 'bg-yellow-500', 'bg-blue-400', 'bg-neon-green']
 
+import { useAuth } from '@/context/auth-context'
+
 export default function SignupPage() {
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', agreeTerms: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  if (!loading && user) {
+    router.replace('/dashboard')
+    return null
+  }
 
   const strength = getPasswordStrength(formData.password)
 

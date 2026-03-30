@@ -12,11 +12,19 @@ import { Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmailInput } from '@/components/common/email-input'
 
+import { useAuth } from '@/context/auth-context'
+
 export default function LoginPage() {
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  if (!loading && user) {
+    router.replace('/dashboard')
+    return null
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target

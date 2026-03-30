@@ -150,7 +150,7 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
               <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all">
                 <Menu size={20} />
               </button>
-              <Link href="/dashboard"><Logo size="sm" /></Link>
+              <Link href="/"><Logo size="sm" /></Link>
             </div>
             <div className="hidden lg:block" />
             <div className="flex items-center gap-1">
