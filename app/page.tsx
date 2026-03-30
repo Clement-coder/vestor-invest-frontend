@@ -2,20 +2,12 @@
 
 import Link from 'next/link'
 import { Logo } from '@/components/common/logo'
+import { LiveMarket } from '@/components/common/live-market'
 import {
   TrendingUp, Shield, Zap, BarChart2, Globe, Lock,
   ArrowRight, Star, ChevronRight, Cpu, Wallet, Bell,
   CheckCircle, Users, DollarSign, Activity,
 } from 'lucide-react'
-
-const coins = [
-  { symbol: 'BTC', name: 'Bitcoin', price: '$67,432.10', change: '+2.4%', up: true, color: '#F7931A' },
-  { symbol: 'ETH', name: 'Ethereum', price: '$3,521.80', change: '+1.8%', up: true, color: '#627EEA' },
-  { symbol: 'BNB', name: 'BNB', price: '$412.50', change: '-0.6%', up: false, color: '#F3BA2F' },
-  { symbol: 'SOL', name: 'Solana', price: '$178.90', change: '+5.2%', up: true, color: '#9945FF' },
-  { symbol: 'XRP', name: 'XRP', price: '$0.6120', change: '+3.1%', up: true, color: '#00AAE4' },
-  { symbol: 'ADA', name: 'Cardano', price: '$0.4830', change: '-1.2%', up: false, color: '#0033AD' },
-]
 
 const features = [
   { icon: Cpu, title: 'AI-Powered Insights', desc: 'Advanced algorithms analyze market trends 24/7 to maximize your returns and minimize risk exposure.' },
@@ -101,6 +93,13 @@ export default function Home() {
           <div className="flex gap-8 animate-[ticker_30s_linear_infinite] whitespace-nowrap">
             {[...coins, ...coins, ...coins].map((coin, i) => (
               <div key={i} className="flex items-center gap-2 text-xs shrink-0">
+                <img
+                  src={`https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${coin.symbol.toLowerCase()}.png`}
+                  alt={coin.symbol}
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 rounded-full"
+                />
                 <span className="font-bold text-white/80">{coin.symbol}</span>
                 <span className="text-white/50">{coin.price}</span>
                 <span className={coin.up ? 'text-[#39ff9e]' : 'text-red-400'}>{coin.change}</span>
@@ -155,23 +154,10 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-white">Live Market Prices</h2>
             <span className="flex items-center gap-1.5 text-xs text-[#39ff9e]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] animate-pulse" />
-              Live
+              Live · updates every 60s
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {coins.map((coin, i) => (
-              <div key={i} className="glass rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all hover:-translate-y-0.5 group">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: coin.color + '20', color: coin.color }}>
-                    {coin.symbol.slice(0, 2)}
-                  </div>
-                  <span className={`text-xs font-semibold ${coin.up ? 'text-[#39ff9e]' : 'text-red-400'}`}>{coin.change}</span>
-                </div>
-                <p className="text-white font-bold text-sm">{coin.price}</p>
-                <p className="text-white/40 text-xs mt-0.5">{coin.name}</p>
-              </div>
-            ))}
-          </div>
+          <LiveMarket />
         </div>
       </section>
 
