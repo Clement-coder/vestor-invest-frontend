@@ -24,9 +24,9 @@ export function GlassButton({
         'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         // Size variants
-        size === 'sm' && 'px-4 py-2 text-sm',
-        size === 'md' && 'px-6 py-3 text-base',
-        size === 'lg' && 'px-8 py-4 text-lg',
+        size === 'sm' && 'px-3 py-1.5 text-xs',
+        size === 'md' && 'px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base',
+        size === 'lg' && 'px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-lg',
         // Style variants
         variant === 'primary' && [
           'bg-gradient-to-r from-neon-cyan via-blue-600 to-neon-green text-white',
