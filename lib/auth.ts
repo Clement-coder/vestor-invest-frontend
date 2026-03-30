@@ -14,11 +14,11 @@ export const signUpWithEmail = (email: string, password: string) => {
   return createUserWithEmailAndPassword(auth, email, password)
 }
 
-export const sendVerificationEmail = () => {
+export const sendVerificationEmail = (user?: import('firebase/auth').User | null) => {
   const { auth } = getFirebase()
-  const user = auth.currentUser
-  if (!user) throw new Error('No user')
-  return sendEmailVerification(user)
+  const target = user || auth.currentUser
+  if (!target) throw new Error('No user')
+  return sendEmailVerification(target)
 }
 
 export const signInWithEmail = (email: string, password: string) => {

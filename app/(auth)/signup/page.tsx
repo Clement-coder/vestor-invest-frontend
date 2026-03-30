@@ -58,7 +58,7 @@ export default function SignupPage() {
     try {
       const { user } = await signUpWithEmail(formData.email, formData.password)
       await updateProfile(user, { displayName: formData.fullName.trim() })
-      await sendVerificationEmail()
+      await sendVerificationEmail(user)
       router.push('/verify-email')
     } catch (err) {
       const code = (err as FirebaseError).code

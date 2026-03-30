@@ -18,7 +18,9 @@ export default function VerifyEmailPage() {
 
   const handleResend = async () => {
     try {
-      await sendVerificationEmail()
+      const { auth } = getFirebase()
+      if (!auth.currentUser) throw new Error('No user')
+      await sendVerificationEmail(auth.currentUser)
       setResent(true)
       setTimeout(() => setResent(false), 5000)
     } catch {
