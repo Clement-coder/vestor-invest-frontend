@@ -210,7 +210,7 @@ body {
   }
 
   /* Button */
-  button, a[href], .gradient-btn {
+  button, .gradient-btn {
     border-radius: 0 !important;
   }
 
