@@ -2,19 +2,19 @@
 
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
-import { TrendingUp, Gift, AlertTriangle, Info, CheckCheck } from 'lucide-react'
+import { TrendingUp, Gift, AlertTriangle, Info, CheckCheck, Bell } from 'lucide-react'
 import { useState } from 'react'
 import React from 'react'
 
-const initialNotifications = [
-  { id: 1, type: 'investment', title: 'Investment Confirmed', message: 'Your $1,250 investment in the Growth plan has been confirmed.', time: '2 min ago', read: false },
-  { id: 2, type: 'dividend', title: 'Dividend Received', message: 'You received a $342.50 dividend from your Premium plan.', time: '1 hour ago', read: false },
-  { id: 3, type: 'alert', title: 'Price Alert', message: 'Bitcoin has dropped 5% in the last 24 hours.', time: '3 hours ago', read: false },
-  { id: 4, type: 'info', title: 'Plan Upgraded', message: 'Your account has been upgraded to Premium membership.', time: 'Yesterday', read: true },
-  { id: 5, type: 'investment', title: 'Withdrawal Processed', message: 'Your withdrawal of $500 has been processed successfully.', time: '2 days ago', read: true },
-  { id: 6, type: 'info', title: 'New Plan Available', message: 'The Exclusive investment plan is now available for eligible accounts.', time: '3 days ago', read: true },
-  { id: 7, type: 'alert', title: 'Security Notice', message: 'A new device logged into your account. If this wasn\'t you, contact support.', time: '5 days ago', read: true },
-]
+// No hardcoded notifications — real data comes from backend
+const initialNotifications: {
+  id: number
+  type: 'investment' | 'dividend' | 'alert' | 'info'
+  title: string
+  message: string
+  time: string
+  read: boolean
+}[] = []
 
 const iconMap = {
   investment: <TrendingUp size={18} className="text-[#39ff9e]" />,
@@ -27,7 +27,6 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(initialNotifications)
 
   const unreadCount = notifications.filter(n => !n.read).length
-
   const markAllRead = () => setNotifications(n => n.map(x => ({ ...x, read: true })))
   const markRead = (id: number) => setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x))
 
@@ -36,9 +35,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Notifications</h1>
-          {unreadCount > 0 && (
-            <p className="text-white/50 text-sm mt-1">{unreadCount} unread</p>
-          )}
+          {unreadCount > 0 && <p className="text-white/50 text-sm mt-1">{unreadCount} unread</p>}
         </div>
         {unreadCount > 0 && (
           <GlassButton variant="outline" size="sm" onClick={markAllRead} className="flex items-center gap-2">
@@ -48,29 +45,39 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      <div className="space-y-2">
-        {notifications.map(n => (
-          <GlassCard
-            key={n.id}
-            variant="nested"
-            hover={false}
-            onClick={() => markRead(n.id)}
-            className={`flex items-start gap-4 cursor-pointer transition-all ${!n.read ? 'border-white/20 bg-white/[0.07]' : ''}`}
-          >
-            <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
-              {iconMap[n.type as keyof typeof iconMap]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-white text-sm font-medium">{n.title}</p>
-                {!n.read && <span className="w-2 h-2 rounded-full bg-[#00a8ff] shrink-0" />}
+      {notifications.length === 0 ? (
+        <GlassCard variant="nested" className="flex flex-col items-center justify-center py-20 gap-4 text-white/30">
+          <Bell size={56} strokeWidth={1} />
+          <p className="text-base font-medium text-white/50">No notifications yet</p>
+          <p className="text-sm text-center max-w-xs">
+            You'll receive alerts here for investments, dividends, withdrawals, and important account updates.
+          </p>
+        </GlassCard>
+      ) : (
+        <div className="space-y-2">
+          {notifications.map(n => (
+            <GlassCard
+              key={n.id}
+              variant="nested"
+              hover={false}
+              onClick={() => markRead(n.id)}
+              className={`flex items-start gap-4 cursor-pointer transition-all ${!n.read ? 'border-white/20 bg-white/[0.07]' : ''}`}
+            >
+              <div className="w-9 h-9 bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                {iconMap[n.type]}
               </div>
-              <p className="text-white/50 text-sm mt-0.5 leading-relaxed">{n.message}</p>
-              <p className="text-white/30 text-xs mt-1">{n.time}</p>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <p className={`font-semibold text-sm ${!n.read ? 'text-white' : 'text-white/60'}`}>{n.title}</p>
+                  <span className="text-white/30 text-xs shrink-0">{n.time}</span>
+                </div>
+                <p className="text-white/50 text-sm mt-1">{n.message}</p>
+              </div>
+              {!n.read && <div className="w-2 h-2 rounded-full bg-[#00a8ff] shrink-0 mt-2" />}
+            </GlassCard>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

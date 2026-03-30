@@ -15,7 +15,7 @@ import {
 import { useState } from 'react'
 import React from 'react'
 
-const USD_BALANCE = 12450.50
+const USD_BALANCE = 0
 
 const currencies = [
   { code: 'USD', symbol: '$', name: 'US Dollar', rate: 1, flag: '🇺🇸' },
@@ -30,7 +30,8 @@ const currencies = [
   { code: 'ETH', symbol: 'Ξ', name: 'Ethereum', rate: 0.0052, flag: '🔷' },
 ]
 
-const walletAddress = '0x4a7B3c9D2e1F8a6b5C0d4E7f2A9b3C6d8E1f4A7b'
+// Wallet address assigned per user from backend — placeholder shown until loaded
+const walletAddress = ''
 
 export default function WalletPage() {
   const [depositOpen, setDepositOpen] = useState(false)
@@ -60,9 +61,9 @@ export default function WalletPage() {
             <p className="text-white/60 text-sm">Total Balance</p>
           </div>
           <p className="text-5xl font-bold text-white mb-1">
-            ${USD_BALANCE.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            $0.00
           </p>
-          <p className="text-[#39ff9e] text-sm mb-6">+$1,245.50 this month (+11.1%)</p>
+          <p className="text-white/40 text-sm mb-6">No activity yet — make a deposit to get started</p>
 
           <div className="flex gap-3">
             <GlassButton variant="primary" onClick={() => setDepositOpen(true)} className="flex items-center gap-2">
@@ -80,15 +81,16 @@ export default function WalletPage() {
       {/* Wallet Address */}
       <GlassCard variant="nested">
         <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Wallet Address</p>
-        <div className="flex items-center gap-3">
-          <p className="text-white/80 text-sm font-mono flex-1 truncate">{walletAddress}</p>
-          <button
-            onClick={copyAddress}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white shrink-0"
-          >
-            {copied ? <Check size={16} className="text-[#39ff9e]" /> : <Copy size={16} />}
-          </button>
-        </div>
+        {walletAddress ? (
+          <div className="flex items-center gap-3">
+            <p className="text-white/80 text-sm font-mono flex-1 truncate">{walletAddress}</p>
+            <button onClick={copyAddress} className="p-2 bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white shrink-0">
+              {copied ? <Check size={16} className="text-[#39ff9e]" /> : <Copy size={16} />}
+            </button>
+          </div>
+        ) : (
+          <p className="text-white/30 text-sm">Your wallet address will appear here once assigned</p>
+        )}
       </GlassCard>
 
       {/* Balance in All Currencies */}
@@ -125,9 +127,12 @@ export default function WalletPage() {
       {/* Deposit Modal */}
       <GlassModal isOpen={depositOpen} onClose={() => setDepositOpen(false)} title="Deposit Funds" neonBorder="cyan">
         <div className="space-y-5">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+          <div className="bg-white/5 border border-white/10 p-4 text-center">
             <p className="text-white/50 text-xs mb-2">Send funds to this address</p>
-            <p className="text-white text-xs font-mono break-all">{walletAddress}</p>
+            {walletAddress
+              ? <p className="text-white text-xs font-mono break-all">{walletAddress}</p>
+              : <p className="text-white/30 text-xs">Wallet address will be assigned to your account</p>
+            }
           </div>
           <div>
             <label className="block text-xs text-white/50 mb-2">Select Network</label>
@@ -156,7 +161,7 @@ export default function WalletPage() {
               onChange={(e) => setWithdrawAmount(e.target.value)}
             />
             <p className="text-white/40 text-xs mt-1">
-              Available: ${USD_BALANCE.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              Available: $0.00
             </p>
           </div>
           <div>

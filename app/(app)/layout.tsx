@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/context/auth-context'
 import { DashboardLayout } from '@/components/layouts/dashboard-layout'
+import ChatAgent from '@/components/common/chat-agent'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -26,5 +27,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>
+  return (
+    <DashboardLayout>
+      {children}
+      <ChatAgent />
+    </DashboardLayout>
+  )
 }
