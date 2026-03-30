@@ -29,7 +29,7 @@ export function GlassButton({
         size === 'lg' && 'px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-lg',
         // Style variants
         variant === 'primary' && [
-          'bg-gradient-to-r from-neon-cyan via-blue-600 to-neon-green text-white',
+          'gradient-btn text-white',
           'hover:shadow-glow-cyan active:scale-95',
           glow && 'shadow-glow-cyan',
         ],
