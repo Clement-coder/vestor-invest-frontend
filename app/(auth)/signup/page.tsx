@@ -59,8 +59,14 @@ export default function SignupPage() {
     try {
       const { user } = await signUpWithEmail(formData.email, formData.password)
       await updateProfile(user, { displayName: formData.fullName.trim() })
-      await sendVerificationEmail(user)
-      toast.success('Account created! Check your email to verify.')
+      try {
+        await sendVerificationEmail(user)
+        toast.success('Account created! Check your email to verify.')
+      } catch (verifyErr) {
+        const code = (verifyErr as FirebaseError).code
+        console.error('Verification email error:', code, verifyErr)
+        toast.warning('Account created but verification email failed. You can resend it on the next page.')
+      }
       router.push('/verify-email')
     } catch (err) {
       const code = (err as FirebaseError).code
@@ -75,7 +81,6 @@ export default function SignupPage() {
   const handleGoogle = async () => {
     setIsLoading(true)
     try {
-      toast.loading('Redirecting to Google...')
       await signInWithGoogle()
     } catch (err) {
       toast.error('Google sign-in failed. Please try again.')

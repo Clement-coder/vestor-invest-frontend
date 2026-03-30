@@ -55,7 +55,6 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     setIsLoading(true)
     try {
-      toast.loading('Redirecting to Google...')
       await signInWithGoogle()
     } catch (err) {
       toast.error('Google sign-in failed. Please try again.')

@@ -29,7 +29,6 @@ export const signInWithEmail = (email: string, password: string) => {
 export const signInWithGoogle = async () => {
   const { auth, googleProvider } = getFirebase()
   await signInWithRedirect(auth, googleProvider)
-  return null
 }
 
 export const getGoogleRedirectResult = () => {
