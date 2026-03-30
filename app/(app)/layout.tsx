@@ -13,12 +13,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (loading) return
     if (!user) {
       router.replace('/login')
-    } else if (!user.emailVerified) {
+    } else if (!user.emailVerified && user.providerData[0]?.providerId !== 'google.com') {
       router.replace('/verify-email')
     }
   }, [user, loading, router])
 
-  if (loading || !user || !user.emailVerified) {
+  if (loading || !user || (!user.emailVerified && user.providerData[0]?.providerId !== 'google.com')) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-neon-cyan border-t-transparent rounded-full animate-spin" />

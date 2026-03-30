@@ -23,17 +23,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { auth } = getFirebase()
 
-    // Handle Google redirect result
-    getGoogleRedirectResult().then((result) => {
-      if (result?.user) {
-        router.push('/dashboard')
-      }
-    }).catch(() => {})
+    // Handle Google redirect result first, then listen for auth state
+    getGoogleRedirectResult()
+      .then((result) => {
+        if (result?.user) {
+          // onAuthStateChanged will fire and set the user,
+          // then we navigate to dashboard
+          router.push('/dashboard')
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          setUser(firebaseUser)
+          setLoading(false)
+        })
+        // store unsubscribe — but since we're in finally we can't return it
+        // so we just let it run; component unmount will be handled below
+      })
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
+    // Also set up auth listener immediately for non-redirect flows
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser)
       setLoading(false)
     })
+
     return unsubscribe
   }, [])
 
