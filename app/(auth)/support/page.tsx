@@ -12,7 +12,7 @@ export default function SupportPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0f25] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <nav className="glass fixed top-0 left-0 right-0 z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/"><Logo size="sm" /></Link>

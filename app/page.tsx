@@ -52,7 +52,7 @@ export default function Home() {
   const cta = user ? '/dashboard' : '/signup'
   const ctaLabel = user ? 'Go to Dashboard' : 'Get Started'
   return (
-    <div className="min-h-screen bg-[#0a0f25] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
 
       {/* Navigation */}
       <nav className="glass fixed top-0 left-0 right-0 z-50 border-b border-white/10 backdrop-blur-xl">

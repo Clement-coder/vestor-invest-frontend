@@ -123,7 +123,7 @@ export default function LoginPage() {
             <div className="w-full border-t border-white/10" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#0A0F25] px-2 text-white/40">Or continue with</span>
+            <span className="bg-background px-2 text-white/40">Or continue with</span>
           </div>
         </div>
 

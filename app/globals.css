@@ -215,7 +215,7 @@ body {
   }
 
   .gradient-btn {
-    background: linear-gradient(to right, #0a0f25, #2563eb, #0a0f25);
+    background: linear-gradient(to right, var(--background), #2563eb, var(--background));
   }
 
   .gradient-btn:hover {
