@@ -10,6 +10,7 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { signUpWithEmail, signInWithGoogle, sendVerificationEmail } from '@/lib/auth'
 import { FirebaseError } from 'firebase/app'
 import { Mail, Lock, User, CheckCircle2, XCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 function getPasswordStrength(password: string) {
   let score = 0
@@ -59,10 +60,13 @@ export default function SignupPage() {
       const { user } = await signUpWithEmail(formData.email, formData.password)
       await updateProfile(user, { displayName: formData.fullName.trim() })
       await sendVerificationEmail(user)
+      toast.success('Account created! Check your email to verify.')
       router.push('/verify-email')
     } catch (err) {
       const code = (err as FirebaseError).code
-      setErrors({ submit: code === 'auth/email-already-in-use' ? 'This email is already registered' : 'Failed to create account. Try again.' })
+      const msg = code === 'auth/email-already-in-use' ? 'This email is already registered' : 'Failed to create account. Try again.'
+      toast.error(msg)
+      setErrors({ submit: msg })
     } finally {
       setIsLoading(false)
     }
@@ -71,8 +75,10 @@ export default function SignupPage() {
   const handleGoogle = async () => {
     setIsLoading(true)
     try {
+      toast.loading('Redirecting to Google...')
       await signInWithGoogle()
     } catch (err) {
+      toast.error('Google sign-in failed. Please try again.')
       setErrors({ submit: 'Google sign-in failed. Please try again.' })
       setIsLoading(false)
     }

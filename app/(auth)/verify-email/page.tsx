@@ -8,6 +8,7 @@ import { sendVerificationEmail, logOut } from '@/lib/auth'
 import { useAuth } from '@/context/auth-context'
 import { getFirebase } from '@/lib/firebase'
 import { reload } from 'firebase/auth'
+import { toast } from 'sonner'
 
 export default function VerifyEmailPage() {
   const { user } = useAuth()
@@ -21,9 +22,11 @@ export default function VerifyEmailPage() {
       const { auth } = getFirebase()
       if (!auth.currentUser) throw new Error('No user')
       await sendVerificationEmail(auth.currentUser)
+      toast.success('Verification email sent! Check your inbox.')
       setResent(true)
       setTimeout(() => setResent(false), 5000)
     } catch {
+      toast.error('Failed to resend. Try again shortly.')
       setError('Failed to resend. Try again shortly.')
     }
   }
@@ -36,8 +39,10 @@ export default function VerifyEmailPage() {
       if (auth.currentUser) {
         await reload(auth.currentUser)
         if (auth.currentUser.emailVerified) {
+          toast.success('Email verified! Welcome to Vestor Invest.')
           router.push('/onboarding')
         } else {
+          toast.error('Email not verified yet. Check your inbox.')
           setError('Email not verified yet. Check your inbox and click the link.')
         }
       }

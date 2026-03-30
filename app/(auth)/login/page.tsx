@@ -9,6 +9,7 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { signInWithEmail, signInWithGoogle } from '@/lib/auth'
 import { FirebaseError } from 'firebase/app'
 import { Mail, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -37,13 +38,14 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       await signInWithEmail(formData.email, formData.password)
+      toast.success('Signed in successfully!')
       router.push('/dashboard')
     } catch (err) {
       const code = (err as FirebaseError).code
-      const msg =
-        code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found'
-          ? 'Invalid email or password'
-          : 'Failed to sign in. Try again.'
+      const msg = code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found'
+        ? 'Invalid email or password'
+        : 'Failed to sign in. Try again.'
+      toast.error(msg)
       setErrors({ submit: msg })
     } finally {
       setIsLoading(false)
@@ -53,8 +55,10 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     setIsLoading(true)
     try {
+      toast.loading('Redirecting to Google...')
       await signInWithGoogle()
     } catch (err) {
+      toast.error('Google sign-in failed. Please try again.')
       setErrors({ submit: 'Google sign-in failed. Please try again.' })
       setIsLoading(false)
     }

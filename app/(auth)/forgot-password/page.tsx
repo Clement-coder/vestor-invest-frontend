@@ -6,6 +6,7 @@ import { AuthLayout } from '@/components/layouts/auth-layout'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { resetPassword } from '@/lib/auth'
+import { toast } from 'sonner'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -20,8 +21,10 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
     try {
       await resetPassword(email)
+      toast.success('Reset link sent! Check your inbox.')
       setSent(true)
     } catch {
+      toast.error('Failed to send reset email. Check the address and try again.')
       setError('Failed to send reset email. Check the address and try again.')
     } finally {
       setIsLoading(false)
