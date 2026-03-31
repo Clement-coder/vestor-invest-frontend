@@ -9,7 +9,7 @@ import { updateProfile, updateEmail, sendPasswordResetEmail } from 'firebase/aut
 import { useState } from 'react'
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [resetSent, setResetSent] = useState(false)

@@ -13,8 +13,10 @@ import {
   User,
   Bell,
   Settings,
+  ShieldCheck,
 } from 'lucide-react'
 import { Logo } from '@/components/common/logo'
+import { useAuth } from '@/context/auth-context'
 import React from 'react'
 
 const sidebarItems = [
@@ -34,6 +36,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
+  const { profile } = useAuth()
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,20 +52,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             Menu
           </p>
           {sidebarItems.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-                pathname === href
-                  ? 'bg-white/10 text-white border border-white/15'
-                  : 'text-white/55 hover:text-white hover:bg-white/5'
-              )}
-            >
-              <Icon size={17} />
-              {label}
+            <Link key={href} href={href}
+              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                pathname === href ? 'bg-white/10 text-white border border-white/15' : 'text-white/55 hover:text-white hover:bg-white/5'
+              )}>
+              <Icon size={17} />{label}
             </Link>
           ))}
+          {profile?.role === 'admin' && (
+            <Link href="/admin"
+              className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 mt-2 border',
+                pathname === '/admin'
+                  ? 'bg-[#00a8ff]/20 text-[#00a8ff] border-[#00a8ff]/30'
+                  : 'text-[#00a8ff]/70 hover:text-[#00a8ff] hover:bg-[#00a8ff]/10 border-[#00a8ff]/20'
+              )}>
+              <ShieldCheck size={17} /> Admin Panel
+            </Link>
+          )}
         </nav>
       </aside>
 

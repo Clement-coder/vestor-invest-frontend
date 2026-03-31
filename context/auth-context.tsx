@@ -3,31 +3,62 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, onAuthStateChanged } from 'firebase/auth'
 import { getFirebase } from '@/lib/firebase'
+import { createClient } from '@/lib/supabase/client'
+import type { Profile } from '@/lib/supabase/db'
 
 interface AuthContextType {
   user: User | null
+  profile: Profile | null
   loading: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true })
+const AuthContext = createContext<AuthContextType>({ user: null, profile: null, loading: true })
 
 export const useAuth = () => useContext(AuthContext)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const { auth } = getFirebase()
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser)
+      if (firebaseUser) {
+        // Upsert profile in Supabase using Firebase UID as the key
+        // We use the anon key + service-level upsert via RPC or direct insert
+        const sb = createClient()
+        // Try to get existing profile first
+        const { data: existing } = await sb
+          .from('profiles')
+          .select('*')
+          .eq('id', firebaseUser.uid)
+          .single()
+
+        if (!existing) {
+          // Insert new profile (Supabase auth not used, so we bypass RLS with upsert)
+          await sb.from('profiles').upsert({
+            id: firebaseUser.uid,
+            email: firebaseUser.email!,
+            full_name: firebaseUser.displayName,
+            avatar_url: firebaseUser.photoURL,
+          })
+          const { data: newProfile } = await sb.from('profiles').select('*').eq('id', firebaseUser.uid).single()
+          setProfile(newProfile)
+        } else {
+          setProfile(existing)
+        }
+      } else {
+        setProfile(null)
+      }
       setLoading(false)
     })
     return unsubscribe
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading }}>
       {children}
     </AuthContext.Provider>
   )

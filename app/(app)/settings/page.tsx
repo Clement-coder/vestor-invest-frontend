@@ -5,7 +5,9 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { GlassSelect } from '@/components/glass/glass-select'
 import { Bell, Shield, Palette, Globe, Trash2, Check } from 'lucide-react'
 import { useTheme } from '@/components/common/theme-provider'
-import { useState } from 'react'
+import { getSettings, upsertSettings } from '@/lib/supabase/db'
+import { useAuth } from '@/context/auth-context'
+import { useState, useEffect } from 'react'
 import React from 'react'
 
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
@@ -32,11 +34,37 @@ function Row({ label, description, children }: { label: string; description?: st
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth()
   const { theme, setTheme } = useTheme()
   const [notifs, setNotifs] = useState({ email: true, push: true, sms: false, marketing: false })
   const [security, setSecurity] = useState({ twoFactor: false, loginAlerts: true, sessionTimeout: true })
   const [currency, setCurrency] = useState('USD')
   const [language, setLanguage] = useState('en')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    getSettings(user.uid).then(s => {
+      if (!s) return
+      setNotifs({ email: s.notif_email, push: s.notif_push, sms: s.notif_sms, marketing: s.notif_marketing })
+      setSecurity({ twoFactor: s.security_2fa, loginAlerts: s.security_login_alerts, sessionTimeout: s.security_session_timeout })
+      setCurrency(s.currency)
+      setLanguage(s.language)
+      if (s.theme) setTheme(s.theme as 'dark' | 'darker' | 'midnight')
+    })
+  }, [user])
+
+  const handleSave = async () => {
+    if (!user) return
+    setSaving(true)
+    await upsertSettings({
+      user_id: user.uid,
+      currency, language, theme,
+      notif_email: notifs.email, notif_push: notifs.push, notif_sms: notifs.sms, notif_marketing: notifs.marketing,
+      security_2fa: security.twoFactor, security_login_alerts: security.loginAlerts, security_session_timeout: security.sessionTimeout,
+    })
+    setSaving(false)
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -171,7 +199,9 @@ export default function SettingsPage() {
         </div>
       </GlassCard>
 
-      <GlassButton variant="primary" className="w-full">Save Changes</GlassButton>
+      <GlassButton variant="primary" className="w-full" onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving...' : 'Save Changes'}
+      </GlassButton>
     </div>
   )
 }

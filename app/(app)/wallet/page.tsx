@@ -6,17 +6,17 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { GlassSelect } from '@/components/glass/glass-select'
 import { TransactionReceipt } from '@/components/common/transaction-receipt'
-import { addTx, type TxRecord } from '@/lib/transactions-store'
+import { insertTransaction, getTransactions } from '@/lib/supabase/db'
+import { useAuth } from '@/context/auth-context'
+import type { Transaction } from '@/lib/supabase/db'
 import Link from 'next/link'
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, MessageCircle,
   DollarSign, Zap, Eye, EyeOff, RefreshCw,
   TrendingUp, TrendingDown, Gift, ArrowLeftRight, XCircle,
 } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import React from 'react'
-
-const USD_BALANCE = 0
 
 const TOP4 = [
   { code: 'USD', name: 'US Dollar', symbol: '$', rate: 1, logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/us.svg', round: false },
@@ -25,14 +25,23 @@ const TOP4 = [
   { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', rate: 0.0052, logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', round: true },
 ]
 
-const RECENT_TXS: { id: string; type: string; asset: string; amount: number; status: string; date: string }[] = []
-
-const txIcon = (type: string, status: string) => {
-  if (status === 'Failed') return <XCircle size={16} className="text-red-400" />
-  if (type === 'Investment') return <TrendingUp size={16} className="text-[#39ff9e]" />
-  if (type === 'Withdrawal') return <TrendingDown size={16} className="text-[#00a8ff]" />
-  if (type === 'Dividend') return <Gift size={16} className="text-[#39ff9e]" />
-  return <ArrowLeftRight size={16} className="text-white/60" />
+// Map Transaction to TxRecord shape for receipt
+function toTxRecord(tx: Transaction) {
+  return {
+    id: tx.id,
+    type: tx.type as 'Withdrawal',
+    method: (tx.method ?? 'bank') as 'bank' | 'crypto',
+    amount: tx.amount.toString(),
+    status: tx.status as 'Pending' | 'Completed' | 'Failed',
+    date: new Date(tx.created_at).toLocaleString(),
+    name: tx.beneficiary_name ?? undefined,
+    bankName: tx.bank_name ?? undefined,
+    swift: tx.swift ?? undefined,
+    iban: tx.iban ?? undefined,
+    routing: tx.routing ?? undefined,
+    network: tx.network ?? undefined,
+    address: tx.address ?? undefined,
+  }
 }
 
 const statusColor: Record<string, string> = {
@@ -41,7 +50,17 @@ const statusColor: Record<string, string> = {
   Failed: 'text-red-400 bg-red-400/10',
 }
 
+const RECENT_TXS: never[] = []
+const txIcon = (type: string, status: string) => {
+  if (status === 'Failed') return null
+  if (type === 'Withdrawal') return null
+  return null
+}
+
 export default function WalletPage() {
+  const { user, profile } = useAuth()
+  const balance = profile?.balance ?? 0
+
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [withdrawTab, setWithdrawTab] = useState<'bank' | 'crypto'>('bank')
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -58,12 +77,15 @@ export default function WalletPage() {
   const [pin, setPin] = useState(['', '', '', ''])
   const [pinConfirm, setPinConfirm] = useState(['', '', '', ''])
   const [pinError, setPinError] = useState('')
-  const [currentTx, setCurrentTx] = useState<TxRecord | null>(null)
-  const [recentTxs, setRecentTxs] = useState<TxRecord[]>(() => {
-    if (typeof window === 'undefined') return []
-    try { return JSON.parse(localStorage.getItem('vestor_transactions') || '[]') } catch { return [] }
-  })
-  const [selectedTx, setSelectedTx] = useState<TxRecord | null>(null)
+  const [currentTx, setCurrentTx] = useState<ReturnType<typeof toTxRecord> | null>(null)
+  const [recentTxs, setRecentTxs] = useState<Transaction[]>([])
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
+
+  // Load transactions from Supabase
+  useEffect(() => {
+    if (!user) return
+    getTransactions(user.uid).then(setRecentTxs)
+  }, [user])
   const pinRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
   const pinConfirmRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
 
@@ -98,20 +120,25 @@ export default function WalletPage() {
     setTimeout(() => pinConfirmRefs[0].current?.focus(), 120)
   }
 
-  const saveTxAndSuccess = () => {
-    const tx: TxRecord = {
-      id: 'VTX-' + Math.random().toString(36).slice(2, 10).toUpperCase(),
-      type: 'Withdrawal', method: withdrawTab,
-      amount: withdrawAmount, status: 'Pending',
-      date: new Date().toLocaleString(),
+  const saveTxAndSuccess = async () => {
+    if (!user) return
+    const txId = 'VTX-' + Math.random().toString(36).slice(2, 10).toUpperCase()
+    const newTx: Omit<Transaction, 'created_at'> = {
+      id: txId,
+      user_id: user.uid,
+      type: 'Withdrawal',
+      method: withdrawTab,
+      amount: parseFloat(withdrawAmount),
+      status: 'Pending',
       ...(withdrawTab === 'bank'
-        ? { name: bankFields.name, bankName: bankFields.bankName, swift: bankFields.swift, iban: bankFields.iban, routing: bankFields.routing }
+        ? { beneficiary_name: bankFields.name, bank_name: bankFields.bankName, swift: bankFields.swift, iban: bankFields.iban, routing: bankFields.routing }
         : { network: withdrawNetwork, address: withdrawAddress }
       ),
     }
-    addTx(tx)
-    setCurrentTx(tx)
-    setRecentTxs(prev => [tx, ...prev])
+    await insertTransaction(newTx)
+    const full = { ...newTx, created_at: new Date().toISOString() }
+    setCurrentTx(toTxRecord(full))
+    setRecentTxs(prev => [full, ...prev])
     setWithdrawStep('success')
   }
 
@@ -173,9 +200,9 @@ export default function WalletPage() {
           </div>
 
           <p className="text-5xl font-bold text-white mb-1">
-            {balanceVisible ? '$0.00' : '••••••'}
+            {balanceVisible ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
           </p>
-          <p className="text-white/40 text-sm mb-6">No activity yet — make a deposit to get started</p>
+          <p className="text-white/40 text-sm mb-6">{balance === 0 ? 'No activity yet — make a deposit to get started' : 'Available balance'}</p>
 
           <div className="flex gap-3">
             <GlassButton variant="outline" onClick={() => setWithdrawOpen(true)} className="flex items-center gap-2">
@@ -189,7 +216,7 @@ export default function WalletPage() {
       {/* Balance in Top 4 Currencies */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {TOP4.map((cur) => {
-          const converted = USD_BALANCE * cur.rate
+          const converted = balance * cur.rate
           const formatted = cur.code === 'BTC' || cur.code === 'ETH'
             ? converted.toFixed(6)
             : converted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -230,8 +257,8 @@ export default function WalletPage() {
                   <TrendingDown size={16} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium">{tx.method === 'bank' ? 'Bank Wire' : 'Crypto'} Withdrawal</p>
-                  <p className="text-white/40 text-xs">{tx.date}</p>
+                  <p className="text-white text-sm font-medium">{tx.method === 'bank' ? 'Bank Wire' : tx.type === 'Credit' ? 'Account Credit' : 'Crypto'} {tx.type}</p>
+                  <p className="text-white/40 text-xs">{new Date(tx.created_at).toLocaleString()}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-white text-sm font-semibold">${tx.amount}</p>
@@ -476,7 +503,7 @@ export default function WalletPage() {
 
       {/* Transaction Detail Modal */}
       <GlassModal isOpen={!!selectedTx} onClose={() => setSelectedTx(null)} title="Transaction Details" neonBorder="cyan">
-        {selectedTx && <TransactionReceipt tx={selectedTx} onDone={() => setSelectedTx(null)} />}
+        {selectedTx && <TransactionReceipt tx={toTxRecord(selectedTx)} onDone={() => setSelectedTx(null)} />}
       </GlassModal>
     </div>
   )

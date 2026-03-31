@@ -2,29 +2,26 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send, Bot, User, Mic, MicOff, ImagePlus } from 'lucide-react'
+import { getChatMessages, insertChatMessage, uploadChatImage } from '@/lib/supabase/db'
+import { useAuth } from '@/context/auth-context'
+import type { ChatMessage } from '@/lib/supabase/db'
 import React from 'react'
 
-interface Message {
-  id: number
-  role: 'agent' | 'user'
-  text?: string
-  image?: string // base64 data URL
-  time: string
-}
-
-const STORAGE_KEY = 'vestor_chat_history'
 const now = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-const initialMessage: Message = {
+const initialMessage: ChatMessage = {
   id: 0,
+  user_id: '',
   role: 'agent',
   text: "Hi! I'm your Vestor Invest assistant. How can I help you today? You can ask me about investment plans, withdrawals, account settings, or anything else.",
-  time: now(),
+  image_url: null,
+  created_at: new Date().toISOString(),
 }
 
 const r = (radius: string) => ({ borderRadius: radius })
 
 export default function ChatAgent() {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState(false)
   const [dragY, setDragY] = useState(0)
@@ -32,16 +29,18 @@ export default function ChatAgent() {
   const startY = useRef(0)
   const [input, setInput] = useState('')
   const [listening, setListening] = useState(false)
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (typeof window === 'undefined') return [initialMessage]
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      return saved ? JSON.parse(saved) : [initialMessage]
-    } catch { return [initialMessage] }
-  })
+  const [messages, setMessages] = useState<ChatMessage[]>([initialMessage])
   const bottomRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+
+  // Load messages from Supabase
+  useEffect(() => {
+    if (!user) return
+    getChatMessages(user.uid).then(msgs => {
+      if (msgs.length > 0) setMessages(msgs)
+    })
+  }, [user])
 
   // ── draggable FAB ──
   const [fabSide, setFabSide] = useState<'left' | 'right'>('right')
@@ -103,33 +102,41 @@ export default function ChatAgent() {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  const send = (text = input) => {
+  const send = async (text = input) => {
     const t = text.trim()
-    if (!t) return
-    setMessages(prev => [...prev, { id: Date.now(), role: 'user', text: t, time: now() }])
+    if (!t || !user) return
+    const msg: Omit<ChatMessage, 'id' | 'created_at'> = { user_id: user.uid, role: 'user', text: t, image_url: null }
+    const optimistic: ChatMessage = { ...msg, id: Date.now(), created_at: new Date().toISOString() }
+    setMessages(prev => [...prev, optimistic])
     setInput('')
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1, role: 'agent',
+    await insertChatMessage(msg)
+    setTimeout(async () => {
+      const agentMsg: Omit<ChatMessage, 'id' | 'created_at'> = {
+        user_id: user.uid, role: 'agent', image_url: null,
         text: 'Thanks for reaching out! Our team will get back to you shortly. For urgent matters, please contact support@vestorinvest.com.',
-        time: now(),
-      }])
+      }
+      const agentOptimistic: ChatMessage = { ...agentMsg, id: Date.now() + 1, created_at: new Date().toISOString() }
+      setMessages(prev => [...prev, agentOptimistic])
+      await insertChatMessage(agentMsg)
     }, 800)
   }
 
-  const sendImage = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      setMessages(prev => [...prev, { id: Date.now(), role: 'user', image: reader.result as string, time: now() }])
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now() + 1, role: 'agent',
-          text: 'Thanks for sharing the image! Our team will review it and get back to you shortly.',
-          time: now(),
-        }])
-      }, 800)
-    }
-    reader.readAsDataURL(file)
+  const sendImage = async (file: File) => {
+    if (!user) return
+    const url = await uploadChatImage(user.uid, file)
+    if (!url) return
+    const msg: Omit<ChatMessage, 'id' | 'created_at'> = { user_id: user.uid, role: 'user', text: null, image_url: url }
+    const optimistic: ChatMessage = { ...msg, id: Date.now(), created_at: new Date().toISOString() }
+    setMessages(prev => [...prev, optimistic])
+    await insertChatMessage(msg)
+    setTimeout(async () => {
+      const agentMsg: Omit<ChatMessage, 'id' | 'created_at'> = {
+        user_id: user.uid, role: 'agent', image_url: null,
+        text: 'Thanks for sharing the image! Our team will review it and get back to you shortly.',
+      }
+      setMessages(prev => [...prev, { ...agentMsg, id: Date.now() + 1, created_at: new Date().toISOString() }])
+      await insertChatMessage(agentMsg)
+    }, 800)
   }
 
   const toggleVoice = () => {
@@ -223,9 +230,9 @@ export default function ChatAgent() {
                     {msg.role === 'agent' ? <Bot size={13} style={{ color: 'var(--primary)' }} /> : <User size={13} className="text-white/60" />}
                   </div>
                   <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    {msg.image ? (
+                    {msg.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={msg.image} alt="shared" style={{ ...r('10px'), maxWidth: 200, maxHeight: 200, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                      <img src={msg.image_url} alt="shared" style={{ ...r('10px'), maxWidth: 200, maxHeight: 200, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
                     ) : (
                       <div
                         style={msg.role === 'agent'
@@ -236,7 +243,7 @@ export default function ChatAgent() {
                         {msg.text}
                       </div>
                     )}
-                    <span className="text-white/30 text-xs px-1">{msg.time}</span>
+                    <span className="text-white/30 text-xs px-1">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
               ))}
