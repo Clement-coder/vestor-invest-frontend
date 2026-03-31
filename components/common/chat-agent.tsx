@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Bot, User, Mic, MicOff } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { MessageCircle, X, Send, Bot, User, Mic, MicOff, ImagePlus } from 'lucide-react'
 import React from 'react'
 
 interface Message {
   id: number
   role: 'agent' | 'user'
-  text: string
+  text?: string
+  image?: string // base64 data URL
   time: string
 }
 
@@ -21,11 +22,14 @@ const initialMessage: Message = {
   time: now(),
 }
 
-// Bypass global button border-radius rule for chat UI
 const r = (radius: string) => ({ borderRadius: radius })
 
 export default function ChatAgent() {
   const [open, setOpen] = useState(false)
+  const [visible, setVisible] = useState(false)
+  const [dragY, setDragY] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const startY = useRef(0)
   const [input, setInput] = useState('')
   const [listening, setListening] = useState(false)
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -33,17 +37,66 @@ export default function ChatAgent() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       return saved ? JSON.parse(saved) : [initialMessage]
-    } catch {
-      return [initialMessage]
-    }
+    } catch { return [initialMessage] }
   })
   const bottomRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+
+  // ── draggable FAB ──
+  const [fabSide, setFabSide] = useState<'left' | 'right'>('right')
+  const [fabY, setFabY] = useState(24)
+  const fabDragging = useRef(false)
+  const fabMoved = useRef(false)
+  const fabStart = useRef({ clientX: 0, clientY: 0, fabY: 24 })
+
+  const onFabPointerDown = (e: React.PointerEvent) => {
+    fabDragging.current = true
+    fabMoved.current = false
+    fabStart.current = { clientX: e.clientX, clientY: e.clientY, fabY }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+  const onFabPointerMove = (e: React.PointerEvent) => {
+    if (!fabDragging.current) return
+    const dy = fabStart.current.clientY - e.clientY
+    if (Math.abs(dy) > 4 || Math.abs(e.clientX - fabStart.current.clientX) > 4) fabMoved.current = true
+    const newY = Math.max(16, Math.min(window.innerHeight - 72, fabStart.current.fabY + dy))
+    setFabY(newY)
+  }
+  const onFabPointerUp = (e: React.PointerEvent) => {
+    if (!fabDragging.current) return
+    fabDragging.current = false
+    setFabSide(e.clientX < window.innerWidth / 2 ? 'left' : 'right')
+    if (!fabMoved.current) setOpen(o => !o)
+  }
+
+  // open/close animation
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      requestAnimationFrame(() => setVisible(true))
+    } else {
+      setVisible(false)
+      const t = setTimeout(() => { document.body.style.overflow = 'unset'; setDragY(0) }, 300)
+      return () => clearTimeout(t)
+    }
+    return () => { document.body.style.overflow = 'unset' }
+  }, [open])
+
+  const close = useCallback(() => setOpen(false), [])
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
-    }
+    const handler = () => setOpen(true)
+    window.addEventListener('open-chat-agent', handler)
+    return () => window.removeEventListener('open-chat-agent', handler)
+  }, [])
+
+  const onTouchStart = (e: React.TouchEvent) => { startY.current = e.touches[0].clientY; setDragging(true) }
+  const onTouchMove = (e: React.TouchEvent) => { const d = e.touches[0].clientY - startY.current; if (d > 0) setDragY(d) }
+  const onTouchEnd = () => { setDragging(false); if (dragY > 120) close(); else setDragY(0) }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
   }, [messages])
 
   useEffect(() => {
@@ -53,146 +106,165 @@ export default function ChatAgent() {
   const send = (text = input) => {
     const t = text.trim()
     if (!t) return
-    const userMsg: Message = { id: Date.now(), role: 'user', text: t, time: now() }
-    setMessages(prev => [...prev, userMsg])
+    setMessages(prev => [...prev, { id: Date.now(), role: 'user', text: t, time: now() }])
     setInput('')
     setTimeout(() => {
       setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        role: 'agent',
+        id: Date.now() + 1, role: 'agent',
         text: 'Thanks for reaching out! Our team will get back to you shortly. For urgent matters, please contact support@vestorinvest.com.',
         time: now(),
       }])
     }, 800)
   }
 
+  const sendImage = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      setMessages(prev => [...prev, { id: Date.now(), role: 'user', image: reader.result as string, time: now() }])
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1, role: 'agent',
+          text: 'Thanks for sharing the image! Our team will review it and get back to you shortly.',
+          time: now(),
+        }])
+      }, 800)
+    }
+    reader.readAsDataURL(file)
+  }
+
   const toggleVoice = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SpeechRecognition) return
-
-    if (listening) {
-      recognitionRef.current?.stop()
-      setListening(false)
-      return
-    }
-
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'en-US'
-    recognition.interimResults = false
-    recognition.onresult = (e: any) => {
-      const transcript = e.results[0][0].transcript
-      setInput(transcript)
-      setListening(false)
-    }
-    recognition.onerror = () => setListening(false)
-    recognition.onend = () => setListening(false)
-    recognitionRef.current = recognition
-    recognition.start()
-    setListening(true)
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) return
+    if (listening) { recognitionRef.current?.stop(); setListening(false); return }
+    const rec = new SR()
+    rec.lang = 'en-US'; rec.interimResults = false
+    rec.onresult = (e: any) => { setInput(e.results[0][0].transcript); setListening(false) }
+    rec.onerror = () => setListening(false)
+    rec.onend = () => setListening(false)
+    recognitionRef.current = rec
+    rec.start(); setListening(true)
   }
 
   return (
     <>
-      {/* Floating Glass Button */}
+      {/* Floating Button */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onPointerDown={onFabPointerDown}
+        onPointerMove={onFabPointerMove}
+        onPointerUp={onFabPointerUp}
         style={{
           ...r('50%'),
-          background: 'rgba(255,255,255,0.08)',
+          background: 'var(--glass-bg)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.2)',
-          boxShadow: '0 8px 32px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+          border: '1px solid var(--glass-border)',
+          boxShadow: '0 8px 32px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)',
+          bottom: fabY,
+          ...(fabSide === 'right' ? { right: 24, left: 'auto' } : { left: 24, right: 'auto' }),
+          transition: fabDragging.current ? 'none' : 'left 0.25s ease, right 0.25s ease',
+          touchAction: 'none',
+          cursor: fabDragging.current ? 'grabbing' : 'grab',
         }}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 text-white flex items-center justify-center hover:scale-105 transition-transform"
+        className="fixed z-50 w-14 h-14 text-white flex items-center justify-center"
         aria-label="Open chat"
       >
-        {open ? <X size={22} /> : <MessageCircle size={22} className="text-[#2563eb]" />}
+        {open ? <X size={22} /> : <MessageCircle size={22} style={{ color: 'var(--primary)' }} />}
       </button>
 
       {/* Chat Panel */}
-      {open && (
-        <div
-          style={{
-            background: 'rgba(10,15,37,0.92)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-          }}
-          className="fixed inset-0 z-50 flex flex-col sm:inset-auto sm:bottom-24 sm:right-6 sm:w-[380px] sm:max-h-[520px] sm:rounded-2xl overflow-hidden"
-        >
-          {/* Header */}
+      {(open || visible) && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-end justify-center sm:justify-end sm:pb-24 sm:pr-6">
           <div
-            style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.3), rgba(37,99,235,0.1))' }}
-            className="flex items-center gap-3 px-4 py-3 border-b border-white/10 sm:rounded-t-2xl"
+            className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 sm:hidden ${visible ? 'opacity-100' : 'opacity-0'}`}
+            onClick={close}
+          />
+          <div
+            style={{
+              transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
+              transition: dragging ? 'none' : 'transform 300ms cubic-bezier(0.32,0.72,0,1)',
+              background: 'var(--background)',
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+              border: '1px solid var(--glass-border)',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+            }}
+            className="relative z-10 w-full max-h-[calc(100dvh-60px)] rounded-t-2xl sm:rounded-2xl sm:w-[380px] sm:max-h-[520px] flex flex-col overflow-hidden"
           >
-            <div style={r('50%')} className="w-9 h-9 bg-[#2563eb]/30 border border-[#2563eb]/40 flex items-center justify-center">
-              <Bot size={18} className="text-[#2563eb]" />
+            {/* Drag handle */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1 cursor-grab shrink-0" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+              <div style={r('9999px')} className="w-10 h-1 bg-white/30" />
             </div>
-            <div>
-              <p className="text-white font-semibold text-sm">Vestor Support</p>
-              <p className="text-white/50 text-xs flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-                Online · Always here to help
-              </p>
-            </div>
-          </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 sm:max-h-[340px]">
-            {messages.map(msg => (
-              <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div
-                  style={r('50%')}
-                  className={`w-7 h-7 flex items-center justify-center shrink-0 ${msg.role === 'agent' ? 'bg-[#2563eb]/20 border border-[#2563eb]/30' : 'bg-white/10 border border-white/15'}`}
-                >
-                  {msg.role === 'agent'
-                    ? <Bot size={13} className="text-[#2563eb]" />
-                    : <User size={13} className="text-white/60" />}
-                </div>
-                <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div
-                    style={msg.role === 'agent'
-                      ? { ...r('4px 12px 12px 4px'), background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }
-                      : { ...r('12px 4px 12px 12px'), background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }
-                    }
-                    className="px-3 py-2 text-sm text-white/90"
-                  >
-                    {msg.text}
-                  </div>
-                  <span className="text-white/30 text-xs px-1">{msg.time}</span>
-                </div>
+            {/* Header */}
+            <div style={{ background: 'color-mix(in srgb, var(--primary) 20%, transparent)' }} className="flex items-center gap-3 px-4 py-3 border-b border-white/10 shrink-0">
+              <div style={{ ...r('50%'), background: 'color-mix(in srgb, var(--primary) 25%, transparent)', border: '1px solid color-mix(in srgb, var(--primary) 40%, transparent)' }} className="w-9 h-9 flex items-center justify-center">
+                <Bot size={18} style={{ color: 'var(--primary)' }} />
               </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm">Vestor Support</p>
+                <p className="text-white/50 text-xs flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                  Online · Always here to help
+                </p>
+              </div>
+              <button onClick={close} style={r('8px')} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 transition-all">
+                <X size={18} />
+              </button>
+            </div>
 
-          {/* Input */}
-          <div className="flex items-center gap-2 px-3 py-3 border-t border-white/10">
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && send()}
-              placeholder="Type a message..."
-              style={r('8px')}
-              className="flex-1 bg-white/[0.07] border border-white/10 text-white text-sm px-3 py-2 placeholder:text-white/30 focus:outline-none focus:border-[#2563eb]/50"
-            />
-            <button
-              onClick={toggleVoice}
-              style={r('8px')}
-              className={`w-9 h-9 flex items-center justify-center transition-all ${listening ? 'bg-red-500/20 border border-red-500/40 text-red-400' : 'bg-white/[0.07] border border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}
-            >
-              {listening ? <MicOff size={15} /> : <Mic size={15} />}
-            </button>
-            <button
-              onClick={() => send()}
-              disabled={!input.trim()}
-              style={r('8px')}
-              className="w-9 h-9 bg-[#2563eb] text-white flex items-center justify-center disabled:opacity-40 hover:bg-[#1d4ed8] transition-colors"
-            >
-              <Send size={15} />
-            </button>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
+              {messages.map(msg => (
+                <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div
+                    style={{ ...r('50%'), background: msg.role === 'agent' ? 'color-mix(in srgb, var(--primary) 20%, transparent)' : 'rgba(255,255,255,0.1)', border: `1px solid ${msg.role === 'agent' ? 'color-mix(in srgb, var(--primary) 30%, transparent)' : 'rgba(255,255,255,0.15)'}` }}
+                    className="w-7 h-7 flex items-center justify-center shrink-0 mt-1"
+                  >
+                    {msg.role === 'agent' ? <Bot size={13} style={{ color: 'var(--primary)' }} /> : <User size={13} className="text-white/60" />}
+                  </div>
+                  <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    {msg.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={msg.image} alt="shared" style={{ ...r('10px'), maxWidth: 200, maxHeight: 200, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                    ) : (
+                      <div
+                        style={msg.role === 'agent'
+                          ? { ...r('4px 12px 12px 4px'), background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }
+                          : { ...r('12px 4px 12px 12px'), background: 'var(--primary)' }}
+                        className="px-3 py-2 text-sm text-white/90"
+                      >
+                        {msg.text}
+                      </div>
+                    )}
+                    <span className="text-white/30 text-xs px-1">{msg.time}</span>
+                  </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            <div className="flex items-center gap-2 px-3 py-3 border-t border-white/10 shrink-0">
+              {/* Hidden file input */}
+              <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) sendImage(f); e.target.value = '' }} />
+              <button onClick={() => imageInputRef.current?.click()} style={r('8px')} className="w-9 h-9 flex items-center justify-center bg-white/[0.07] border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all" title="Send image">
+                <ImagePlus size={15} />
+              </button>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && send()}
+                placeholder="Type a message..."
+                style={{ ...r('8px'), background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+                className="flex-1 text-white text-sm px-3 py-2 placeholder:text-white/30 focus:outline-none"
+              />
+              <button onClick={toggleVoice} style={r('8px')} className={`w-9 h-9 flex items-center justify-center transition-all ${listening ? 'bg-red-500/20 border border-red-500/40 text-red-400' : 'bg-white/[0.07] border border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}>
+                {listening ? <MicOff size={15} /> : <Mic size={15} />}
+              </button>
+              <button onClick={() => send()} disabled={!input.trim()} style={{ ...r('8px'), background: 'var(--primary)' }} className="w-9 h-9 text-white flex items-center justify-center disabled:opacity-40 hover:brightness-110 transition-all">
+                <Send size={15} />
+              </button>
+            </div>
           </div>
         </div>
       )}

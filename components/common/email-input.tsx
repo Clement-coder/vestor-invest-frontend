@@ -54,13 +54,21 @@ export function EmailInput({ value, onChange, error, disabled, name = 'email' }:
         onBlur={() => setTimeout(() => setSuggestions([]), 150)}
       />
       {suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 glass border border-white/15 rounded-lg overflow-hidden shadow-xl">
+        <ul className="absolute z-[9999] w-full mt-1 rounded-xl overflow-hidden"
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '1px solid var(--glass-border)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12)',
+          }}
+        >
           {suggestions.map(s => (
             <li key={s}>
               <button
                 type="button"
                 onMouseDown={() => handleSuggest(s)}
-                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-white/85 hover:bg-white/[0.12] hover:text-white transition-colors"
               >
                 {s}
               </button>

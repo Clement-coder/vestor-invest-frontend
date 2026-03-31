@@ -4,6 +4,7 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassChart } from '@/components/glass/glass-chart'
 import { GlassModal } from '@/components/glass/glass-modal'
+import { GlassSelect } from '@/components/glass/glass-select'
 import { useState } from 'react'
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { TrendingUp, Check, BarChart2, ArrowRightLeft, Wallet } from 'lucide-react'
@@ -17,6 +18,7 @@ const plans = [
 
 export default function DashboardPage() {
   const [investmentModalOpen, setInvestmentModalOpen] = useState(false)
+  const [dashboardPlan, setDashboardPlan] = useState('starter')
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -97,16 +99,18 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">Investment Amount</label>
-            <input type="number" placeholder="Enter amount in USD" className="w-full px-4 py-3 bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan/50" />
+            <input type="number" placeholder="Enter amount in USD" className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan/50" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">Select Plan</label>
-            <select className="w-full px-4 py-3 bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50">
-              <option className="bg-background text-white">Starter - 8.5% APY</option>
-              <option className="bg-background text-white">Growth - 12.5% APY</option>
-              <option className="bg-background text-white">Premium - 16.5% APY</option>
-            </select>
-          </div>
+          <GlassSelect
+            label="Select Plan"
+            value={dashboardPlan}
+            onChange={setDashboardPlan}
+            options={[
+              { value: 'starter', label: 'Starter - 8.5% APY' },
+              { value: 'growth', label: 'Growth - 12.5% APY' },
+              { value: 'premium', label: 'Premium - 16.5% APY' },
+            ]}
+          />
           <GlassButton variant="primary" className="w-full">Confirm Investment</GlassButton>
         </div>
       </GlassModal>

@@ -2,6 +2,7 @@
 
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
+import { GlassSelect } from '@/components/glass/glass-select'
 import { Bell, Shield, Palette, Globe, Trash2, Check } from 'lucide-react'
 import { useTheme } from '@/components/common/theme-provider'
 import { useState } from 'react'
@@ -92,31 +93,23 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold text-white">Preferences</h2>
         </div>
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs text-white/50 mb-2">Default Currency</label>
-            <select
+            <GlassSelect
+              label="Default Currency"
               value={currency}
-              onChange={e => setCurrency(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/[0.08] border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#00a8ff]/50"
-            >
-              {['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'BTC', 'ETH'].map(c => (
-                <option key={c} className="bg-[#0a0f25]">{c}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-white/50 mb-2">Language</label>
-            <select
+              onChange={setCurrency}
+              options={['USD','EUR','GBP','JPY','CAD','AUD','BTC','ETH'].map(c => ({ value: c, label: c }))}
+            />
+            <GlassSelect
+              label="Language"
               value={language}
-              onChange={e => setLanguage(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/[0.08] border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#00a8ff]/50"
-            >
-              <option value="en" className="bg-[#0a0f25]">English</option>
-              <option value="fr" className="bg-[#0a0f25]">Français</option>
-              <option value="es" className="bg-[#0a0f25]">Español</option>
-              <option value="de" className="bg-[#0a0f25]">Deutsch</option>
-            </select>
-          </div>
+              onChange={setLanguage}
+              options={[
+                { value: 'en', label: 'English' },
+                { value: 'fr', label: 'Français' },
+                { value: 'es', label: 'Español' },
+                { value: 'de', label: 'Deutsch' },
+              ]}
+            />
         </div>
       </GlassCard>
 

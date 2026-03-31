@@ -86,7 +86,7 @@ export function GlassModal({
         className={cn(
           'relative z-10 w-full',
           // mobile: full width, leave ~60px gap at top
-          'sm:max-w-md sm:mx-4 sm:rounded-xl',
+          'sm:max-w-lg sm:mx-4 sm:rounded-xl',
           // on mobile: sheet from bottom, rounded top corners only
           'rounded-t-2xl sm:rounded-xl',
           'max-h-[calc(100dvh-60px)] sm:max-h-[90vh]',
@@ -119,7 +119,7 @@ export function GlassModal({
         </div>
 
         {/* Content */}
-        <div className="px-6 pb-6 overflow-y-auto flex-1">
+        <div className="px-6 pb-6 overflow-y-auto flex-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
           {children}
         </div>
       </div>

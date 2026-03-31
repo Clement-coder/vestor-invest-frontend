@@ -3,6 +3,7 @@
 import { GlassModal } from '@/components/glass/glass-modal'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { GlassSelect } from '@/components/glass/glass-select'
 import { useState } from 'react'
 import React from 'react'
 
@@ -95,16 +96,16 @@ export function InvestmentModal({
             <label className="block text-sm font-medium text-white/80 mb-2">
               Select Plan
             </label>
-            <select
+            <GlassSelect
               value={selectedPlan}
-              onChange={(e) => setSelectedPlan(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 cursor-pointer"
-            >
-              <option className="bg-background text-white">Starter - 8.5% APY</option>
-              <option className="bg-background text-white">Growth - 12.5% APY</option>
-              <option className="bg-background text-white">Premium - 16.5% APY</option>
-              <option className="bg-background text-white">Exclusive - 20.5% APY</option>
-            </select>
+              onChange={setSelectedPlan}
+              options={[
+                { value: 'Starter', label: 'Starter - 8.5% APY' },
+                { value: 'Growth', label: 'Growth - 12.5% APY' },
+                { value: 'Premium', label: 'Premium - 16.5% APY' },
+                { value: 'Exclusive', label: 'Exclusive - 20.5% APY' },
+              ]}
+            />
           </div>
 
           {errors.submit && (

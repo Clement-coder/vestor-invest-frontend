@@ -29,15 +29,7 @@ const navLinks = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
-const initialNotifications = [
-  { id: 1, type: 'investment', title: 'Investment Confirmed', message: 'Your $1,250 investment in the Growth plan has been confirmed.', time: '2 min ago', read: false },
-  { id: 2, type: 'dividend', title: 'Dividend Received', message: 'You received a $342.50 dividend from your Premium plan.', time: '1 hour ago', read: false },
-  { id: 3, type: 'alert', title: 'Price Alert', message: 'Bitcoin has dropped 5% in the last 24 hours.', time: '3 hours ago', read: false },
-  { id: 4, type: 'info', title: 'Plan Upgraded', message: 'Your account has been upgraded to Premium membership.', time: 'Yesterday', read: true },
-  { id: 5, type: 'investment', title: 'Withdrawal Processed', message: 'Your withdrawal of $500 has been processed successfully.', time: '2 days ago', read: true },
-  { id: 6, type: 'info', title: 'New Plan Available', message: 'The Exclusive plan is now available for eligible accounts.', time: '3 days ago', read: true },
-  { id: 7, type: 'alert', title: 'Security Notice', message: "A new device logged into your account. If this wasn't you, contact support.", time: '5 days ago', read: true },
-]
+const initialNotifications: { id: number; type: string; title: string; message: string; time: string; read: boolean }[] = []
 
 const notifIcon: Record<string, React.ReactNode> = {
   investment: <TrendingUp size={16} className="text-[#39ff9e]" />,
@@ -239,7 +231,13 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {notifications.map(n => (
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-white/30 py-16">
+                <Bell size={48} strokeWidth={1} />
+                <p className="text-sm text-white/50 font-medium">No notifications yet</p>
+                <p className="text-xs text-center text-white/30 max-w-[200px]">You'll be notified about investments, dividends, and account updates.</p>
+              </div>
+            ) : notifications.map(n => (
               <button
                 key={n.id}
                 onClick={() => markRead(n.id)}
