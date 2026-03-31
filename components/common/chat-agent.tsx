@@ -95,10 +95,6 @@ export default function ChatAgent() {
   const onTouchEnd = () => { setDragging(false); if (dragY > 120) close(); else setDragY(0) }
 
   useEffect(() => {
-    if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
-  }, [messages])
-
-  useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 

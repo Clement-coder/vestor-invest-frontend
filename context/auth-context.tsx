@@ -26,28 +26,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser)
       if (firebaseUser) {
-        // Upsert profile in Supabase using Firebase UID as the key
-        // We use the anon key + service-level upsert via RPC or direct insert
-        const sb = createClient()
-        // Try to get existing profile first
-        const { data: existing } = await sb
-          .from('profiles')
-          .select('*')
-          .eq('id', firebaseUser.uid)
-          .single()
-
-        if (!existing) {
-          // Insert new profile (Supabase auth not used, so we bypass RLS with upsert)
-          await sb.from('profiles').upsert({
-            id: firebaseUser.uid,
-            email: firebaseUser.email!,
-            full_name: firebaseUser.displayName,
-            avatar_url: firebaseUser.photoURL,
-          })
-          const { data: newProfile } = await sb.from('profiles').select('*').eq('id', firebaseUser.uid).single()
-          setProfile(newProfile)
-        } else {
-          setProfile(existing)
+        try {
+          const sb = createClient()
+          const { data: existing } = await sb.from('profiles').select('*').eq('id', firebaseUser.uid).single()
+          if (!existing) {
+            await sb.from('profiles').upsert({
+              id: firebaseUser.uid,
+              email: firebaseUser.email!,
+              full_name: firebaseUser.displayName,
+              avatar_url: firebaseUser.photoURL,
+            })
+            const { data: newProfile } = await sb.from('profiles').select('*').eq('id', firebaseUser.uid).single()
+            setProfile(newProfile)
+          } else {
+            setProfile(existing)
+          }
+        } catch {
+          // Supabase not set up yet — app still works without profile
+          setProfile(null)
         }
       } else {
         setProfile(null)
