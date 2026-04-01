@@ -4,10 +4,10 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassModal } from '@/components/glass/glass-modal'
-import { getAllProfiles, adminUpdateBalance, adminUpdateTransactionStatus, getAllTransactions, getChatUsers, getChatMessages, insertChatMessage } from '@/lib/supabase/db'
+import { getAllProfiles, adminUpdateBalance, adminUpdateTransactionStatus, getAllTransactions, getChatUsers, getChatMessages, insertChatMessage, uploadChatImage } from '@/lib/supabase/db'
 import { useAuth } from '@/context/auth-context'
 import type { Profile, Transaction, ChatMessage } from '@/lib/supabase/db'
-import { Users, MessageSquare, ArrowLeftRight, DollarSign, Check, X, Send, Bot } from 'lucide-react'
+import { Users, MessageSquare, ArrowLeftRight, DollarSign, Check, X, Send, Bot, ImagePlus } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -35,11 +35,14 @@ export default function AdminPage() {
   const [transactions, setTransactions] = useState<(Transaction & { profiles?: { email: string; full_name: string | null } })[]>([])
 
   // Messages
-  const [chatUsers, setChatUsers] = useState<{ user_id: string; profiles: { email: string; full_name: string | null } | null }[]>([])
+  const [chatUsers, setChatUsers] = useState<{ user_id: string; profiles: { email: string; full_name: string | null; avatar_url: string | null } | null }[]>([])
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null)
   const [chatMsgs, setChatMsgs] = useState<ChatMessage[]>([])
   const [replyText, setReplyText] = useState('')
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>({})
   const bottomRef = useRef<HTMLDivElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const [allMsgCounts, setAllMsgCounts] = useState<Record<string, number>>({})
 
   // Guard: admin only
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function AdminPage() {
         getAllProfiles().then(profiles => {
           const enriched = rawUsers.map((cu: any) => {
             const p = profiles.find(u => u.id === cu.user_id)
-            return { user_id: cu.user_id, profiles: p ? { email: p.email, full_name: p.full_name } : null }
+            return { user_id: cu.user_id, profiles: p ? { email: p.email, full_name: p.full_name, avatar_url: p.avatar_url } : null }
           })
           setChatUsers(enriched)
         })
@@ -63,13 +66,34 @@ export default function AdminPage() {
     }
   }, [tab])
 
-  // Poll for new messages every 5s when messages tab is open
+  // Poll selected chat every 5s
   useEffect(() => {
     if (!selectedChatUser) return
-    getChatMessages(selectedChatUser).then(setChatMsgs)
-    const id = setInterval(() => getChatMessages(selectedChatUser).then(setChatMsgs), 5000)
+    getChatMessages(selectedChatUser).then(msgs => {
+      setChatMsgs(msgs)
+      setSeenCounts(prev => ({ ...prev, [selectedChatUser]: msgs.filter(m => m.role === 'user').length }))
+    })
+    const id = setInterval(() => {
+      getChatMessages(selectedChatUser).then(msgs => {
+        setChatMsgs(msgs)
+        setSeenCounts(prev => ({ ...prev, [selectedChatUser]: msgs.filter(m => m.role === 'user').length }))
+      })
+    }, 5000)
     return () => clearInterval(id)
   }, [selectedChatUser])
+
+  // Poll all users for new message badge every 8s
+  useEffect(() => {
+    if (tab !== 'messages' || chatUsers.length === 0) return
+    const poll = () => chatUsers.forEach(cu =>
+      getChatMessages(cu.user_id).then(msgs =>
+        setAllMsgCounts(prev => ({ ...prev, [cu.user_id]: msgs.filter(m => m.role === 'user').length }))
+      )
+    )
+    poll()
+    const id = setInterval(poll, 8000)
+    return () => clearInterval(id)
+  }, [tab, chatUsers])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMsgs])
 
@@ -94,6 +118,15 @@ export default function AdminPage() {
     const optimistic: ChatMessage = { ...msg, id: Date.now(), created_at: new Date().toISOString() }
     setChatMsgs(prev => [...prev, optimistic])
     setReplyText('')
+    await insertChatMessage(msg)
+  }
+
+  const sendImage = async (file: File) => {
+    if (!selectedChatUser) return
+    const url = await uploadChatImage(selectedChatUser, file)
+    if (!url) return
+    const msg: Omit<ChatMessage, 'id' | 'created_at'> = { user_id: selectedChatUser, role: 'agent', text: null, image_url: url }
+    setChatMsgs(prev => [...prev, { ...msg, id: Date.now(), created_at: new Date().toISOString() }])
     await insertChatMessage(msg)
   }
 
@@ -187,53 +220,103 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* User list */}
           <div className="space-y-2">
-            {chatUsers.map((cu: any) => (
-              <GlassCard key={cu.user_id} variant="nested" hover className={`cursor-pointer transition-all ${selectedChatUser === cu.user_id ? 'border-[#00a8ff]/40' : ''}`}
-                onClick={() => setSelectedChatUser(cu.user_id)}>
-                <p className="text-white text-sm font-semibold">{cu.profiles?.full_name || cu.profiles?.email || cu.user_id.slice(0, 8)}</p>
-                <p className="text-white/40 text-xs">{cu.profiles?.email}</p>
-              </GlassCard>
-            ))}
+            {chatUsers.map((cu: any) => {
+              const total = allMsgCounts[cu.user_id] ?? 0
+              const seen = seenCounts[cu.user_id] ?? 0
+              const hasNew = selectedChatUser !== cu.user_id && total > seen
+              const name = cu.profiles?.full_name || cu.profiles?.email?.split('@')[0] || cu.user_id.slice(0, 8)
+              const initials = name[0].toUpperCase()
+              return (
+                <div key={cu.user_id}
+                  onClick={() => setSelectedChatUser(cu.user_id)}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${selectedChatUser === cu.user_id ? 'border-[#00a8ff]/40 bg-[#00a8ff]/10' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]'}`}>
+                  <div className="relative shrink-0">
+                    {cu.profiles?.avatar_url
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={cu.profiles.avatar_url} alt={name} className="w-10 h-10 rounded-full object-cover" />
+                      : <div className="w-10 h-10 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-sm font-bold text-[#00a8ff]">{initials}</div>}
+                    {hasNew && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#00a8ff] border-2 border-[#0a0f25]" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-white text-sm font-semibold truncate">{name}</p>
+                      {hasNew && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#00a8ff] text-white font-bold shrink-0">New</span>}
+                    </div>
+                    <p className="text-white/40 text-xs truncate">{cu.profiles?.email}</p>
+                  </div>
+                </div>
+              )
+            })}
             {chatUsers.length === 0 && <p className="text-white/30 text-sm text-center py-6">No messages yet</p>}
           </div>
 
           {/* Chat window */}
           <div className="md:col-span-2">
-            {selectedChatUser ? (
-              <GlassCard variant="elevated" className="flex flex-col h-[500px] p-0 overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'none' }}>
-                  {chatMsgs.map(msg => (
-                    <div key={msg.id} className={`flex gap-2 ${msg.role === 'agent' ? 'flex-row-reverse' : ''}`}>
-                      <div style={{ ...r('50%'), background: msg.role === 'agent' ? 'color-mix(in srgb, var(--primary) 25%, transparent)' : 'rgba(255,255,255,0.1)' }}
-                        className="w-7 h-7 flex items-center justify-center shrink-0">
-                        {msg.role === 'agent' ? <Bot size={13} style={{ color: 'var(--primary)' }} /> : <span className="text-xs text-white/60">U</span>}
-                      </div>
-                      <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'agent' ? 'items-end' : 'items-start'}`}>
-                        {msg.image_url
-                          // eslint-disable-next-line @next/next/no-img-element
-                          ? <img src={msg.image_url} alt="img" style={{ ...r('8px'), maxWidth: 160, maxHeight: 160, objectFit: 'cover' }} />
-                          : <div style={msg.role === 'agent'
-                              ? { ...r('12px 4px 12px 12px'), background: 'var(--primary)' }
-                              : { ...r('4px 12px 12px 4px'), background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
-                              className="px-3 py-2 text-sm text-white/90">{msg.text}</div>}
-                        <span className="text-white/30 text-xs px-1">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
+            {selectedChatUser ? (() => {
+              const cu = chatUsers.find((c: any) => c.user_id === selectedChatUser)
+              const name = cu?.profiles?.full_name || cu?.profiles?.email?.split('@')[0] || selectedChatUser.slice(0, 8)
+              return (
+                <GlassCard variant="elevated" className="flex flex-col h-[520px] p-0 overflow-hidden">
+                  {/* Chat header with profile */}
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 shrink-0 bg-white/[0.03]">
+                    {cu?.profiles?.avatar_url
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={cu.profiles.avatar_url} alt={name} className="w-8 h-8 rounded-full object-cover" />
+                      : <div className="w-8 h-8 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-xs font-bold text-[#00a8ff]">{name[0].toUpperCase()}</div>}
+                    <div>
+                      <p className="text-white text-sm font-semibold">{name}</p>
+                      <p className="text-white/40 text-xs">{cu?.profiles?.email}</p>
                     </div>
-                  ))}
-                  <div ref={bottomRef} />
-                </div>
-                <div className="flex gap-2 p-3 border-t border-white/10">
-                  <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendReply()}
-                    placeholder="Reply as agent..." style={{ ...r('8px'), background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
-                    className="flex-1 text-white text-sm px-3 py-2 placeholder:text-white/30 focus:outline-none" />
-                  <button onClick={sendReply} disabled={!replyText.trim()} style={{ ...r('8px'), background: 'var(--primary)' }}
-                    className="w-9 h-9 text-white flex items-center justify-center disabled:opacity-40">
-                    <Send size={15} />
-                  </button>
-                </div>
-              </GlassCard>
-            ) : (
-              <GlassCard variant="nested" className="flex items-center justify-center h-[500px] text-white/30">
+                  </div>
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'none' }}>
+                    {chatMsgs.map(msg => (
+                      <div key={msg.id} className={`flex gap-2 ${msg.role === 'agent' ? 'flex-row-reverse' : ''}`}>
+                        <div className="w-7 h-7 rounded-full shrink-0 overflow-hidden flex items-center justify-center"
+                          style={{ background: msg.role === 'agent' ? 'color-mix(in srgb, var(--primary) 25%, transparent)' : 'rgba(255,255,255,0.1)' }}>
+                          {msg.role === 'agent'
+                            ? <Bot size={13} style={{ color: 'var(--primary)' }} />
+                            : cu?.profiles?.avatar_url
+                              // eslint-disable-next-line @next/next/no-img-element
+                              ? <img src={cu.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                              : <span className="text-xs text-white/60">{name[0].toUpperCase()}</span>}
+                        </div>
+                        <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'agent' ? 'items-end' : 'items-start'}`}>
+                          {msg.image_url
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={msg.image_url} alt="img" style={{ borderRadius: 8, maxWidth: 160, maxHeight: 160, objectFit: 'cover' }} />
+                            : <div style={msg.role === 'agent'
+                                ? { borderRadius: '12px 4px 12px 12px', background: 'var(--primary)' }
+                                : { borderRadius: '4px 12px 12px 4px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+                                className="px-3 py-2 text-sm text-white/90">{msg.text}</div>}
+                          <span className="text-white/30 text-xs px-1">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={bottomRef} />
+                  </div>
+
+                  {/* Input */}
+                  <div className="flex gap-2 p-3 border-t border-white/10 shrink-0">
+                    <input ref={imageInputRef} type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) sendImage(f); e.target.value = '' }} />
+                    <button onClick={() => imageInputRef.current?.click()}
+                      className="w-9 h-9 rounded-lg bg-white/[0.07] border border-white/10 text-white/50 hover:text-white flex items-center justify-center transition-all">
+                      <ImagePlus size={15} />
+                    </button>
+                    <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendReply()}
+                      placeholder="Reply as agent..." style={{ borderRadius: 8, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+                      className="flex-1 text-white text-sm px-3 py-2 placeholder:text-white/30 focus:outline-none" />
+                    <button onClick={sendReply} disabled={!replyText.trim()} style={{ borderRadius: 8, background: 'var(--primary)' }}
+                      className="w-9 h-9 text-white flex items-center justify-center disabled:opacity-40">
+                      <Send size={15} />
+                    </button>
+                  </div>
+                </GlassCard>
+              )
+            })() : (
+              <GlassCard variant="nested" className="flex items-center justify-center h-[520px] text-white/30">
                 <p>Select a user to view messages</p>
               </GlassCard>
             )}
