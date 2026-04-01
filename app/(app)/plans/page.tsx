@@ -38,6 +38,7 @@ function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () =>
   const { remaining, label } = useCountdown(inv.end_time)
   const total = Math.max(1, new Date(inv.end_time).getTime() - new Date(inv.start_time).getTime())
   const progress = Math.max(0, Math.min(100, ((total - remaining) / total) * 100))
+  const { refreshProfile } = useAuth()
 
   useEffect(() => {
     if (remaining === 0 && inv.status === 'active') {
@@ -45,10 +46,10 @@ function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () =>
       const pct = isProfit ? 0.05 + Math.random() * 0.20 : -(0.02 + Math.random() * 0.13)
       const profitLoss = parseFloat((inv.amount * pct).toFixed(2))
       completeInvestment(inv.id, profitLoss).then(({ error }) => {
-        if (!error) onComplete()
+        if (!error) { onComplete(); refreshProfile() }
       })
     }
-  }, [remaining, inv, onComplete])
+  }, [remaining, inv, onComplete, refreshProfile])
 
   return (
     <div className="flex-1">
@@ -64,7 +65,7 @@ function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () =>
 }
 
 export default function PlansPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const balance = profile?.balance ?? 0
   const [investments, setInvestments] = useState<Investment[]>([])
   const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0] | null>(null)
@@ -91,7 +92,7 @@ export default function PlansPage() {
       toast.success(`$${selectedPlan.amount} investment started! Returns in 5 hours.`)
       setModalOpen(false)
       load()
-      window.location.reload()
+      refreshProfile()
     }
   }
 
