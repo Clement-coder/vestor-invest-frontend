@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 /* v2 */
 
+/* Prevent iOS auto-zoom on input focus — must be font-size >= 16px */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
 :root,
 [data-theme='dark'] {
   --background: #0a0f25;
