@@ -1,5 +1,16 @@
 import { createClient } from './client'
 
+async function dbProxy(body: object) {
+  const res = await fetch('/api/db', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'DB error')
+  return json
+}
+
 export type Profile = {
   id: string
   email: string
@@ -64,67 +75,50 @@ export type UserSettings = {
 
 // ── Profile ──────────────────────────────────────────────
 export async function getProfile(userId: string): Promise<Profile | null> {
-  const sb = createClient()
-  const { data } = await sb.from('profiles').select('*').eq('id', userId).single()
-  return data
+  try { return await dbProxy({ table: 'profiles', action: 'select', filters: [['id', userId]], single: true }) } catch { return null }
 }
 
 export async function updateProfile(userId: string, updates: Partial<Pick<Profile, 'full_name' | 'avatar_url'>>) {
-  const sb = createClient()
-  return sb.from('profiles').update(updates).eq('id', userId)
+  return dbProxy({ table: 'profiles', action: 'update', payload: updates, filters: [['id', userId]] })
 }
 
 // ── Transactions ─────────────────────────────────────────
 export async function getTransactions(userId: string): Promise<Transaction[]> {
-  const sb = createClient()
-  const { data } = await sb.from('transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
-  return data ?? []
+  try { return await dbProxy({ table: 'transactions', action: 'select', filters: [['user_id', userId]], order: { col: 'created_at', asc: false } }) } catch { return [] }
 }
 
 export async function insertTransaction(tx: Omit<Transaction, 'created_at'>) {
-  const sb = createClient()
-  return sb.from('transactions').insert(tx)
+  return dbProxy({ table: 'transactions', action: 'insert', payload: tx })
 }
 
 export async function getAllTransactions(): Promise<Transaction[]> {
-  const sb = createClient()
-  const { data } = await sb.from('transactions').select('*, profiles(email, full_name)').order('created_at', { ascending: false })
-  return data ?? []
+  try { return await dbProxy({ table: 'transactions', action: 'select', order: { col: 'created_at', asc: false } }) } catch { return [] }
 }
 
 // ── Notifications ─────────────────────────────────────────
 export async function getNotifications(userId: string): Promise<Notification[]> {
-  const sb = createClient()
-  const { data } = await sb.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false })
-  return data ?? []
+  try { return await dbProxy({ table: 'notifications', action: 'select', filters: [['user_id', userId]], order: { col: 'created_at', asc: false } }) } catch { return [] }
 }
 
 export async function markNotificationRead(id: number) {
-  const sb = createClient()
-  return sb.from('notifications').update({ read: true }).eq('id', id)
+  return dbProxy({ table: 'notifications', action: 'update', payload: { read: true }, filters: [['id', id]] })
 }
 
 export async function markAllNotificationsRead(userId: string) {
-  const sb = createClient()
-  return sb.from('notifications').update({ read: true }).eq('user_id', userId)
+  return dbProxy({ table: 'notifications', action: 'update', payload: { read: true }, filters: [['user_id', userId]] })
 }
 
 // ── Chat ──────────────────────────────────────────────────
 export async function getChatMessages(userId: string): Promise<ChatMessage[]> {
-  const sb = createClient()
-  const { data } = await sb.from('chat_messages').select('*').eq('user_id', userId).order('created_at', { ascending: true })
-  return data ?? []
+  try { return await dbProxy({ table: 'chat_messages', action: 'select', filters: [['user_id', userId]], order: { col: 'created_at', asc: true } }) } catch { return [] }
 }
 
 export async function insertChatMessage(msg: Omit<ChatMessage, 'id' | 'created_at'>) {
-  const sb = createClient()
-  return sb.from('chat_messages').insert(msg)
+  return dbProxy({ table: 'chat_messages', action: 'insert', payload: msg })
 }
 
 export async function getAllChatMessages() {
-  const sb = createClient()
-  const { data } = await sb.from('chat_messages').select('*, profiles(email, full_name)').order('created_at', { ascending: false })
-  return data ?? []
+  try { return await dbProxy({ table: 'chat_messages', action: 'select', order: { col: 'created_at', asc: false } }) } catch { return [] }
 }
 
 export async function getChatUsers() {
@@ -134,38 +128,30 @@ export async function getChatUsers() {
     .select('user_id, profiles(email, full_name)')
     .eq('role', 'user')
     .order('created_at', { ascending: false })
-  // deduplicate by user_id
   const seen = new Set<string>()
-  return (data ?? []).filter(m => { if (seen.has(m.user_id)) return false; seen.add(m.user_id); return true })
+  return (data ?? []).filter((m: any) => { if (seen.has(m.user_id)) return false; seen.add(m.user_id); return true })
 }
 
 // ── Settings ──────────────────────────────────────────────
 export async function getSettings(userId: string): Promise<UserSettings | null> {
-  const sb = createClient()
-  const { data } = await sb.from('user_settings').select('*').eq('user_id', userId).single()
-  return data
+  try { return await dbProxy({ table: 'user_settings', action: 'select', filters: [['user_id', userId]], single: true }) } catch { return null }
 }
 
 export async function upsertSettings(settings: Partial<UserSettings> & { user_id: string }) {
-  const sb = createClient()
-  return sb.from('user_settings').upsert(settings)
+  return dbProxy({ table: 'user_settings', action: 'upsert', payload: settings })
 }
 
 // ── Admin ─────────────────────────────────────────────────
 export async function getAllProfiles(): Promise<Profile[]> {
-  const sb = createClient()
-  const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false })
-  return data ?? []
+  try { return await dbProxy({ table: 'profiles', action: 'select', order: { col: 'created_at', asc: false } }) } catch { return [] }
 }
 
 export async function adminUpdateBalance(userId: string, newBalance: number) {
-  const sb = createClient()
-  return sb.from('profiles').update({ balance: newBalance }).eq('id', userId)
+  return dbProxy({ table: 'profiles', action: 'update', payload: { balance: newBalance }, filters: [['id', userId]] })
 }
 
 export async function adminUpdateTransactionStatus(txId: string, status: 'Completed' | 'Failed') {
-  const sb = createClient()
-  return sb.from('transactions').update({ status }).eq('id', txId)
+  return dbProxy({ table: 'transactions', action: 'update', payload: { status }, filters: [['id', txId]] })
 }
 
 // ── Investments ───────────────────────────────────────────
@@ -181,28 +167,30 @@ export type Investment = {
 }
 
 export async function getUserInvestments(userId: string): Promise<Investment[]> {
-  const sb = createClient()
-  const { data } = await sb.from('investments').select('*').eq('user_id', userId).order('created_at', { ascending: false })
-  return data ?? []
+  const res = await fetch(`/api/investments?userId=${userId}`)
+  if (!res.ok) return []
+  return res.json()
 }
 
 export async function insertInvestment(userId: string, amount: number): Promise<{ data: Investment | null; error: string | null }> {
-  const sb = createClient()
-  const { data, error } = await sb
-    .from('investments')
-    .insert({ user_id: userId, amount })
-    .select('*')
-    .single()
-  return { data, error: error?.message ?? null }
+  const res = await fetch('/api/investments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, amount }),
+  })
+  const json = await res.json()
+  if (!res.ok) return { data: null, error: json.error ?? 'Failed' }
+  return { data: json, error: null }
 }
 
 export async function completeInvestment(id: string, profitLoss: number): Promise<{ error: string | null }> {
-  const sb = createClient()
-  const { error } = await sb
-    .from('investments')
-    .update({ status: 'completed', profit_loss: profitLoss })
-    .eq('id', id)
-  return { error: error?.message ?? null }
+  const res = await fetch('/api/investments', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, profitLoss }),
+  })
+  const json = await res.json()
+  return { error: res.ok ? null : (json.error ?? 'Failed') }
 }
 
 // ── Storage (chat images) ─────────────────────────────────
