@@ -173,8 +173,11 @@ export default function AdminPage() {
           {users.map(u => (
             <GlassCard key={u.id} variant="nested" hover className="flex items-center justify-between gap-3 cursor-pointer" onClick={() => { setSelectedUser(u); setNewBalance(u.balance.toString()) }}>
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-sm font-bold text-[#00a8ff] shrink-0">
-                  {(u.full_name || u.email)[0].toUpperCase()}
+                <div className="w-9 h-9 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-sm font-bold text-[#00a8ff] shrink-0 overflow-hidden">
+                  {u.avatar_url
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                    : (u.full_name || u.email)[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <p className="text-white text-sm font-semibold truncate">{u.full_name || '—'}</p>
@@ -334,8 +337,11 @@ export default function AdminPage() {
         {selectedUser && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.05] border border-white/10">
-              <div className="w-10 h-10 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-[#00a8ff] font-bold shrink-0">
-                {(selectedUser.full_name || selectedUser.email)[0].toUpperCase()}
+              <div className="w-10 h-10 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-[#00a8ff] font-bold shrink-0 overflow-hidden">
+                {selectedUser.avatar_url
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={selectedUser.avatar_url} alt="" className="w-full h-full object-cover" />
+                  : (selectedUser.full_name || selectedUser.email)[0].toUpperCase()}
               </div>
               <div className="min-w-0">
                 <p className="text-white font-semibold truncate">{selectedUser.full_name || '—'}</p>
