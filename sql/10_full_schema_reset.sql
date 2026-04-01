@@ -11,7 +11,7 @@ drop table if exists public.profiles       cascade;
 drop view  if exists public.admin_users_view;
 
 -- ── Drop existing functions ───────────────────────────────────────────────────
-drop function if exists public.handle_new_user()            cascade;
+drop function if exists public.handle_new_user()           cascade;
 drop function if exists public.set_updated_at()             cascade;
 drop function if exists public.handle_balance_credit()      cascade;
 drop function if exists public.notify_on_credit()           cascade;

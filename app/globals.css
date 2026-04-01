@@ -173,6 +173,79 @@ body {
   100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
 }
 
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes hologram-flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96% { opacity: 0.4; }
+  97% { opacity: 1; }
+  98% { opacity: 0.2; }
+  99% { opacity: 1; }
+}
+
+@keyframes cyber-border {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes digit-scramble {
+  0%   { content: "8"; opacity: 0.3; }
+  10%  { content: "3"; opacity: 0.5; }
+  20%  { content: "7"; opacity: 0.4; }
+  30%  { content: "1"; opacity: 0.6; }
+  40%  { content: "9"; opacity: 0.5; }
+  50%  { content: "4"; opacity: 0.7; }
+  60%  { content: "2"; opacity: 0.5; }
+  70%  { content: "6"; opacity: 0.6; }
+  80%  { content: "5"; opacity: 0.4; }
+  90%  { content: "0"; opacity: 0.5; }
+  100% { content: "●"; opacity: 1; }
+}
+
+@keyframes glitch-x {
+  0%, 100% { clip-path: inset(0 0 100% 0); transform: translateX(0); }
+  20% { clip-path: inset(20% 0 60% 0); transform: translateX(-4px); }
+  40% { clip-path: inset(50% 0 30% 0); transform: translateX(4px); }
+  60% { clip-path: inset(70% 0 10% 0); transform: translateX(-2px); }
+  80% { clip-path: inset(10% 0 80% 0); transform: translateX(2px); }
+}
+
+@keyframes reveal-up {
+  0% { transform: translateY(100%); opacity: 0; filter: blur(8px); }
+  60% { filter: blur(0); }
+  100% { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+
+@keyframes hide-down {
+  0% { transform: translateY(0); opacity: 1; filter: blur(0); }
+  100% { transform: translateY(-100%); opacity: 0; filter: blur(8px); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes eye-burst {
+  0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  30% { transform: scale(1.4) rotate(15deg); filter: brightness(2) drop-shadow(0 0 8px var(--primary)); }
+  60% { transform: scale(0.85) rotate(-5deg); filter: brightness(1.5); }
+  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+@keyframes grid-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 40px; }
+}
+
+@keyframes corner-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 @layer components {
   /* Glassmorphism Utilities */
   .glass {

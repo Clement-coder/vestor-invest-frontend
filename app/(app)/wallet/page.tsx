@@ -259,93 +259,137 @@ export default function WalletPage() {
       <h1 className="text-3xl font-bold text-white">Wallet</h1>
 
       {/* Main Balance */}
-      <div className="relative overflow-hidden rounded-2xl p-[1px]" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, transparent 50%, var(--secondary) 100%)' }}>
-        <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0d1535 0%, #0a0f25 60%, #0d1a2e 100%)' }}>
-          {/* Animated background orbs */}
-          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)', animation: 'floating 6s ease-in-out infinite' }} />
-          <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, var(--secondary) 0%, transparent 70%)', animation: 'floating 8s ease-in-out infinite reverse' }} />
-          {/* Scanline shimmer */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px)', backgroundSize: '100% 3px' }} />
+      <div className="relative rounded-2xl overflow-hidden" style={{ background: '#060d1f' }}>
+        {/* Animated cyber grid background */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.07]" style={{
+          backgroundImage: 'linear-gradient(rgba(0,168,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(0,168,255,0.8) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+          animation: 'grid-move 4s linear infinite',
+        }} />
 
-          <div className="relative p-6 sm:p-8">
-            {/* Header row */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, var(--secondary)) 100%)', boxShadow: '0 0 20px color-mix(in srgb, var(--primary) 40%, transparent)' }}>
-                  <Wallet size={20} className="text-[#0a0f25]" />
-                </div>
-                <div>
-                  <p className="text-white/40 text-xs uppercase tracking-widest font-medium">Total Balance</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] inline-block" style={{ boxShadow: '0 0 6px #39ff9e', animation: 'neon-glow 2s ease-in-out infinite' }} />
-                    <span className="text-[#39ff9e] text-xs font-medium">Live</span>
-                  </div>
-                </div>
+        {/* Animated gradient border */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
+          padding: '1px',
+          background: 'linear-gradient(135deg, #00a8ff, #39ff9e, #00a8ff, #7b2fff, #00a8ff)',
+          backgroundSize: '300% 300%',
+          animation: 'cyber-border 4s ease infinite',
+          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude',
+        }} />
+
+        {/* Scanline sweep */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+          <div className="absolute left-0 right-0 h-[2px] opacity-20" style={{
+            background: 'linear-gradient(90deg, transparent, var(--primary), transparent)',
+            animation: 'scanline 3s linear infinite',
+          }} />
+        </div>
+
+        {/* Corner accents */}
+        {[['top-0 left-0', 'border-t-2 border-l-2'], ['top-0 right-0', 'border-t-2 border-r-2'], ['bottom-0 left-0', 'border-b-2 border-l-2'], ['bottom-0 right-0', 'border-b-2 border-r-2']].map(([pos, border], i) => (
+          <div key={i} className={`absolute ${pos} w-5 h-5 ${border} border-[var(--primary)] rounded-sm pointer-events-none`} style={{ animation: `corner-glow 2s ease-in-out ${i * 0.5}s infinite` }} />
+        ))}
+
+        {/* Glow orbs */}
+        <div className="absolute top-0 right-0 w-72 h-72 pointer-events-none" style={{ background: 'radial-gradient(circle at 70% 30%, rgba(0,168,255,0.12) 0%, transparent 65%)' }} />
+        <div className="absolute bottom-0 left-0 w-56 h-56 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 70%, rgba(57,255,158,0.08) 0%, transparent 65%)' }} />
+
+        <div className="relative p-6 sm:p-8" style={{ animation: 'hologram-flicker 8s ease-in-out infinite' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center gap-3">
+              <div className="relative w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(0,168,255,0.2), rgba(57,255,158,0.1))', border: '1px solid rgba(0,168,255,0.3)' }}>
+                <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))', opacity: 0.15 }} />
+                <Wallet size={20} style={{ color: 'var(--primary)', filter: 'drop-shadow(0 0 6px var(--primary))' }} />
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setBalanceVisible(v => !v)}
-                  className="group relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 overflow-hidden"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  aria-label="Toggle balance visibility"
-                >
-                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 20%, transparent), transparent)' }} />
-                  <span
-                    key={balanceVisible ? 'eye' : 'eye-off'}
-                    className="relative transition-all duration-300"
-                    style={{ animation: 'balanceToggle 0.35s cubic-bezier(0.34,1.56,0.64,1)' }}
-                  >
-                    {balanceVisible
-                      ? <Eye size={17} style={{ color: 'var(--primary)' }} />
-                      : <EyeOff size={17} className="text-white/40" />
-                    }
+              <div>
+                <p className="text-white/40 text-[10px] uppercase tracking-[0.25em] font-semibold">Total Balance</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#39ff9e] opacity-75" style={{ animation: 'pulse-ring 1.5s ease-out infinite' }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#39ff9e]" style={{ boxShadow: '0 0 8px #39ff9e' }} />
                   </span>
-                </button>
-                <button
-                  onClick={handleRefresh}
-                  className="group relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  aria-label="Refresh balance"
-                >
-                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--secondary) 20%, transparent), transparent)' }} />
-                  <RefreshCw size={17} className={`relative text-white/40 group-hover:text-white transition-colors ${refreshing ? 'animate-spin' : ''}`} />
-                </button>
+                  <span className="text-[#39ff9e] text-[10px] font-bold tracking-widest uppercase">Live</span>
+                </div>
               </div>
             </div>
 
-            {/* Balance amount */}
-            <div className="mb-1 overflow-hidden">
-              <p
-                key={balanceVisible ? 'shown' : 'hidden'}
-                className="font-bold text-white leading-none"
-                style={{
-                  fontSize: 'clamp(2.2rem, 6vw, 3.5rem)',
-                  animation: 'balanceReveal 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-                  ...(balanceVisible ? { background: 'linear-gradient(90deg, #fff 0%, color-mix(in srgb, var(--primary) 60%, white) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : {})
-                }}
-              >
-                {balanceVisible
-                  ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
-                  : <span className="tracking-[0.3em] text-white/30">{'●●●●●●'}</span>
-                }
-              </p>
-            </div>
-            <p className="text-white/30 text-sm mb-8">
-              {balance === 0 ? 'No activity yet — make a deposit to get started' : 'Available balance · USD'}
-            </p>
-
-            {/* Action buttons */}
-            <div className="flex gap-3">
+            <div className="flex items-center gap-2">
+              {/* Eye toggle — the star of the show */}
               <button
-                onClick={() => setWithdrawOpen(true)}
-                className="group flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95"
-                style={{ background: 'linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--secondary)))', color: '#0a0f25', boxShadow: '0 0 20px color-mix(in srgb, var(--primary) 30%, transparent)' }}
+                onClick={() => setBalanceVisible(v => !v)}
+                className="relative w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden group"
+                style={{ background: 'rgba(0,168,255,0.08)', border: '1px solid rgba(0,168,255,0.2)' }}
+                aria-label="Toggle balance visibility"
               >
-                <ArrowUpFromLine size={15} />
-                Withdraw
+                {/* Ripple on click */}
+                <span className="absolute inset-0 rounded-xl opacity-0 group-active:opacity-100 transition-opacity" style={{ background: 'radial-gradient(circle, rgba(0,168,255,0.4) 0%, transparent 70%)' }} />
+                <span
+                  key={String(balanceVisible)}
+                  style={{ animation: 'eye-burst 0.45s cubic-bezier(0.22,1,0.36,1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {balanceVisible
+                    ? <Eye size={18} style={{ color: 'var(--primary)', filter: 'drop-shadow(0 0 6px var(--primary))' }} />
+                    : <EyeOff size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                  }
+                </span>
+              </button>
+
+              <button
+                onClick={handleRefresh}
+                className="relative w-11 h-11 rounded-xl flex items-center justify-center group"
+                style={{ background: 'rgba(57,255,158,0.06)', border: '1px solid rgba(57,255,158,0.15)' }}
+                aria-label="Refresh"
+              >
+                <RefreshCw size={17} className={`transition-colors group-hover:text-[#39ff9e] text-white/30 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </div>
+
+          {/* Balance number */}
+          <div className="overflow-hidden mb-1" style={{ height: '4rem' }}>
+            <div
+              key={String(balanceVisible)}
+              style={{ animation: balanceVisible ? 'reveal-up 0.5s cubic-bezier(0.22,1,0.36,1)' : 'reveal-up 0.5s cubic-bezier(0.22,1,0.36,1)' }}
+            >
+              {balanceVisible ? (
+                <p className="font-black leading-none" style={{
+                  fontSize: 'clamp(2.4rem, 7vw, 3.8rem)',
+                  background: 'linear-gradient(90deg, #fff 0%, #00a8ff 50%, #39ff9e 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 20px rgba(0,168,255,0.4))',
+                  letterSpacing: '-0.02em',
+                }}>
+                  ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              ) : (
+                <p className="font-black leading-none tracking-[0.15em]" style={{
+                  fontSize: 'clamp(2.4rem, 7vw, 3.8rem)',
+                  color: 'rgba(0,168,255,0.25)',
+                  letterSpacing: '0.2em',
+                }}>
+                  ██████
+                </p>
+              )}
+            </div>
+          </div>
+
+          <p className="text-white/25 text-xs mb-8 uppercase tracking-widest font-medium">
+            {balance === 0 ? '— No activity yet —' : 'Available · USD'}
+          </p>
+
+          {/* Withdraw button */}
+          <button
+            onClick={() => setWithdrawOpen(true)}
+            className="group relative flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold overflow-hidden transition-all duration-200 active:scale-95"
+            style={{ background: 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, var(--secondary)) 100%)', color: '#060d1f', boxShadow: '0 0 30px rgba(0,168,255,0.35), inset 0 1px 0 rgba(255,255,255,0.2)' }}
+          >
+            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)' }} />
+            <ArrowUpFromLine size={15} className="relative" />
+            <span className="relative tracking-wide">Withdraw</span>
+          </button>
         </div>
       </div>
 
