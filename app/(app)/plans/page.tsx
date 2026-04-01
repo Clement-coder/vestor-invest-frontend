@@ -21,10 +21,9 @@ const PLANS = [
 ]
 
 function useCountdown(endTime: string) {
-  const [remaining, setRemaining] = useState(0)
+  const [remaining, setRemaining] = useState(() => Math.max(0, new Date(endTime).getTime() - Date.now()))
   useEffect(() => {
     const tick = () => setRemaining(Math.max(0, new Date(endTime).getTime() - Date.now()))
-    tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [endTime])
