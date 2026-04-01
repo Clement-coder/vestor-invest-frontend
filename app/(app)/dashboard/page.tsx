@@ -11,6 +11,81 @@ import { TrendingUp, TrendingDown, ArrowRightLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
+function useCountdown(endTime: string) {
+  const calc = () => {
+    const diff = new Date(endTime).getTime() - Date.now()
+    if (diff <= 0) return { label: 'Completed', pct: 100 }
+    const h = Math.floor(diff / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    return { label: `${h}h ${m}m ${s}s`, pct: 0 }
+  }
+  const [state, setState] = useState(calc)
+  useEffect(() => {
+    const id = setInterval(() => setState(calc()), 1000)
+    return () => clearInterval(id)
+  }, [endTime])
+  return state
+}
+
+function ActiveInvestmentRow({ inv }: { inv: Investment }) {
+  const start = new Date(inv.start_time).getTime()
+  const end = new Date(inv.end_time).getTime()
+  const now = Date.now()
+  const total = end - start
+  const elapsed = Math.min(now - start, total)
+  const { label } = useCountdown(inv.end_time)
+  const [pct, setPct] = useState(total > 0 ? Math.min((elapsed / total) * 100, 100) : 0)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const e = Math.min(Date.now() - start, total)
+      setPct(total > 0 ? Math.min((e / total) * 100, 100) : 0)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [start, total])
+
+  return (
+    <GlassCard variant="nested" className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Clock size={16} className="text-yellow-400 shrink-0" />
+          <div>
+            <p className="text-white text-sm font-semibold">${Number(inv.amount).toLocaleString()} investment</p>
+            <p className="text-white/40 text-xs">{new Date(inv.created_at).toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="text-xs bg-yellow-400/10 text-yellow-400 px-2 py-1 rounded-full font-mono">{label}</span>
+        </div>
+      </div>
+      {/* Progress bar */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-white/30">
+          <span>Progress</span>
+          <span>{pct.toFixed(1)}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-1000"
+            style={{
+              width: `${pct}%`,
+              background: pct >= 100
+                ? 'linear-gradient(90deg, #39ff9e, #00a8ff)'
+                : 'linear-gradient(90deg, #00a8ff, #39ff9e)',
+              boxShadow: `0 0 8px ${pct >= 100 ? '#39ff9e' : '#00a8ff'}60`,
+            }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-white/20">
+          <span>{new Date(inv.start_time).toLocaleDateString()}</span>
+          <span>{new Date(inv.end_time).toLocaleDateString()}</span>
+        </div>
+      </div>
+    </GlassCard>
+  )
+}
+
 type PricePoint = { time: string; price: number }
 
 function useLivePrice(coinId: string, color: string) {
@@ -225,30 +300,23 @@ export default function DashboardPage() {
               const pl = Number(inv.profit_loss ?? 0)
               const isActive = inv.status === 'active'
               const isProfit = pl >= 0
+              if (isActive) return <ActiveInvestmentRow key={inv.id} inv={inv} />
               return (
                 <GlassCard key={inv.id} variant="nested" className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    {isActive
-                      ? <Clock size={16} className="text-yellow-400 shrink-0" />
-                      : isProfit
-                        ? <TrendingUp size={16} className="text-[#39ff9e] shrink-0" />
-                        : <TrendingDown size={16} className="text-red-400 shrink-0" />}
+                    {isProfit
+                      ? <TrendingUp size={16} className="text-[#39ff9e] shrink-0" />
+                      : <TrendingDown size={16} className="text-red-400 shrink-0" />}
                     <div>
                       <p className="text-white text-sm font-semibold">${Number(inv.amount).toLocaleString()} investment</p>
                       <p className="text-white/40 text-xs">{new Date(inv.created_at).toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    {isActive ? (
-                      <span className="text-xs bg-yellow-400/10 text-yellow-400 px-2 py-1 rounded-full">Active</span>
-                    ) : (
-                      <>
-                        <p className={`font-bold text-sm ${isProfit ? 'text-[#39ff9e]' : 'text-red-400'}`}>
-                          {isProfit ? '+' : ''}${pl.toFixed(2)}
-                        </p>
-                        <p className="text-white/40 text-xs">Returned ${(Number(inv.amount) + pl).toFixed(2)}</p>
-                      </>
-                    )}
+                    <p className={`font-bold text-sm ${isProfit ? 'text-[#39ff9e]' : 'text-red-400'}`}>
+                      {isProfit ? '+' : ''}${pl.toFixed(2)}
+                    </p>
+                    <p className="text-white/40 text-xs">Returned ${(Number(inv.amount) + pl).toFixed(2)}</p>
                   </div>
                 </GlassCard>
               )
