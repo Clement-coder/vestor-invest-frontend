@@ -441,28 +441,35 @@ export default function WalletPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {recentTxs.slice(0, 4).map(tx => (
+            {recentTxs.slice(0, 4).map(tx => {
+              const credit = tx.type === 'Credit' || tx.type === 'Deposit'
+              return (
               <button key={tx.id} onClick={() => setSelectedTx(tx)}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all text-left">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <TrendingDown size={16} style={{ color: 'var(--primary)' }} />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: credit ? 'rgba(57,255,158,0.1)' : 'rgba(248,113,113,0.1)' }}>
+                  {credit
+                    ? <TrendingUp size={15} style={{ color: '#39ff9e' }} />
+                    : <TrendingDown size={15} style={{ color: '#f87171' }} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium">
-                    {tx.type === 'Credit' ? '💰 Investment Return' : tx.type === 'Debit' ? '📤 Investment Placed' : tx.method === 'bank' ? 'Bank Wire' : 'Crypto'} {tx.type !== 'Credit' && tx.type !== 'Debit' ? tx.type : ''}
+                    {tx.type === 'Credit' ? 'Investment Return' : tx.type === 'Debit' ? 'Investment Placed' : tx.method === 'bank' ? 'Bank Wire Withdrawal' : 'Crypto Withdrawal'}
                   </p>
                   <p className="text-white/40 text-xs">{new Date(tx.created_at).toLocaleString()}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-white text-sm font-semibold overflow-hidden">
+                  <p className={`text-sm font-semibold overflow-hidden ${credit ? 'text-[#39ff9e]' : 'text-red-400'}`}>
                     <span key={`amt-${tx.id}-${balanceVisible}`} style={{ display: 'inline-block', animation: 'reveal-up 0.4s cubic-bezier(0.22,1,0.36,1)' }}>
-                      {balanceVisible ? `$${tx.amount}` : <span style={{ color: 'rgba(0,168,255,0.25)', letterSpacing: '0.15em' }}>████</span>}
+                      {balanceVisible
+                        ? `${credit ? '+' : '-'}$${Number(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                        : <span style={{ color: 'rgba(0,168,255,0.25)', letterSpacing: '0.15em' }}>████</span>}
                     </span>
                   </p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[tx.status]}`}>{tx.status}</span>
                 </div>
               </button>
-            ))}
+            )})}
           </div>
         )}
       </GlassCard>
