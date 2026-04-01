@@ -1,7 +1,7 @@
 -- 05: Investments (active plans per user)
 create table if not exists public.investments (
   id         bigserial primary key,
-  user_id    uuid not null references public.profiles(id) on delete cascade,
+  user_id    text not null references public.profiles(id) on delete cascade,
   plan       text not null check (plan in ('starter', 'growth', 'premium', 'exclusive')),
   amount     numeric(18,2) not null,
   apy        numeric(5,2) not null,

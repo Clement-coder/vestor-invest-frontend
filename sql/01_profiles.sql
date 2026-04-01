@@ -1,6 +1,6 @@
 -- 01: User profiles (extends Supabase auth.users)
 create table if not exists public.profiles (
-  id           uuid primary key references auth.users(id) on delete cascade,
+  id           text primary key,
   email        text unique not null,
   full_name    text,
   avatar_url   text,

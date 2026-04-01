@@ -168,6 +168,43 @@ export async function adminUpdateTransactionStatus(txId: string, status: 'Comple
   return sb.from('transactions').update({ status }).eq('id', txId)
 }
 
+// ── Investments ───────────────────────────────────────────
+export type Investment = {
+  id: string
+  user_id: string
+  amount: number
+  profit_loss: number | null
+  status: 'active' | 'completed'
+  start_time: string
+  end_time: string
+  created_at: string
+}
+
+export async function getUserInvestments(userId: string): Promise<Investment[]> {
+  const sb = createClient()
+  const { data } = await sb.from('investments').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function insertInvestment(userId: string, amount: number): Promise<{ data: Investment | null; error: string | null }> {
+  const sb = createClient()
+  const { data, error } = await sb
+    .from('investments')
+    .insert({ user_id: userId, amount })
+    .select('*')
+    .single()
+  return { data, error: error?.message ?? null }
+}
+
+export async function completeInvestment(id: string, profitLoss: number): Promise<{ error: string | null }> {
+  const sb = createClient()
+  const { error } = await sb
+    .from('investments')
+    .update({ status: 'completed', profit_loss: profitLoss })
+    .eq('id', id)
+  return { error: error?.message ?? null }
+}
+
 // ── Storage (chat images) ─────────────────────────────────
 export async function uploadChatImage(userId: string, file: File): Promise<string | null> {
   const sb = createClient()

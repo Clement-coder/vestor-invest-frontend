@@ -1,7 +1,7 @@
 -- 03: Notifications
 create table if not exists public.notifications (
   id         bigserial primary key,
-  user_id    uuid not null references public.profiles(id) on delete cascade,
+  user_id    text not null references public.profiles(id) on delete cascade,
   type       text not null check (type in ('investment', 'dividend', 'alert', 'info', 'credit', 'withdrawal')),
   title      text not null,
   message    text not null,

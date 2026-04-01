@@ -3,272 +3,215 @@
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassModal } from '@/components/glass/glass-modal'
-import { Check } from 'lucide-react'
-import { useState } from 'react'
+import { useAuth } from '@/context/auth-context'
+import { insertInvestment, getUserInvestments, completeInvestment } from '@/lib/supabase/db'
+import type { Investment } from '@/lib/supabase/db'
+import { useState, useEffect, useCallback } from 'react'
+import { TrendingUp, TrendingDown, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import React from 'react'
 
-export default function PlansPage() {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [investmentModalOpen, setInvestmentModalOpen] = useState(false)
+const PLANS = [50, 100, 200, 500, 1000, 2000]
+const DURATION_MS = 5 * 60 * 60 * 1000 // 5 hours
 
-  const plans = [
-    {
-      id: 'starter',
-      name: 'Starter',
-      apy: '8.5%',
-      min: '$100',
-      max: '$5,000',
-      description: 'Perfect for beginners',
-      features: [
-        'Basic portfolio analytics',
-        'Daily market updates',
-        'Email support',
-        'Mobile app access',
-        'Basic charts',
-        'Monthly reports',
-      ],
-      glow: 'cyan' as const,
-    },
-    {
-      id: 'growth',
-      name: 'Growth',
-      apy: '12.5%',
-      min: '$1,000',
-      max: '$50,000',
-      description: 'For active investors',
-      features: [
-        'Advanced analytics',
-        'Real-time updates',
-        'Priority support',
-        'Mobile app access',
-        'Advanced charts',
-        'Weekly reports',
-        'Portfolio optimization',
-        'Risk assessment',
-      ],
-      glow: 'none' as const,
-    },
-    {
-      id: 'premium',
-      name: 'Premium',
-      apy: '16.5%',
-      min: '$10,000',
-      max: '$100,000',
-      description: 'For serious traders',
-      features: [
-        'AI-powered insights',
-        'Live trading signals',
-        'Dedicated account manager',
-        'Mobile app access',
-        'Premium charts',
-        'Daily reports',
-        'Portfolio rebalancing',
-        'Tax planning tools',
-        'API access',
-      ],
-      glow: 'green' as const,
-    },
-    {
-      id: 'exclusive',
-      name: 'Exclusive',
-      apy: '20.5%',
-      min: '$100,000',
-      max: 'Unlimited',
-      description: 'For elite investors',
-      features: [
-        'All Premium features',
-        'Personal portfolio manager',
-        'Direct trading execution',
-        'Custom strategies',
-        'VIP support 24/7',
-        'Real-time alerts',
-        'Hedge fund access',
-        'Private investment opportunities',
-        'Quarterly reviews',
-      ],
-      glow: 'cyan' as const,
-    },
-  ]
+function useCountdown(endTime: string) {
+  const [remaining, setRemaining] = useState(0)
+  useEffect(() => {
+    const tick = () => setRemaining(Math.max(0, new Date(endTime).getTime() - Date.now()))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [endTime])
+  const h = Math.floor(remaining / 3600000)
+  const m = Math.floor((remaining % 3600000) / 60000)
+  const s = Math.floor((remaining % 60000) / 1000)
+  return { remaining, label: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` }
+}
+
+function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () => void }) {
+  const { remaining, label } = useCountdown(inv.end_time)
+
+  useEffect(() => {
+    if (remaining === 0 && inv.status === 'active') {
+      // Random profit/loss: 60% chance profit (5–25%), 40% chance loss (2–15%)
+      const isProfit = Math.random() < 0.6
+      const pct = isProfit
+        ? 0.05 + Math.random() * 0.20
+        : -(0.02 + Math.random() * 0.13)
+      const profitLoss = parseFloat((inv.amount * pct).toFixed(2))
+      completeInvestment(inv.id, profitLoss).then(({ error }) => {
+        if (!error) onComplete()
+      })
+    }
+  }, [remaining, inv, onComplete])
+
+  return <span className="font-mono text-yellow-400">{label}</span>
+}
+
+export default function PlansPage() {
+  const { user, profile } = useAuth()
+  const balance = profile?.balance ?? 0
+  const [investments, setInvestments] = useState<Investment[]>([])
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(() => {
+    if (user) getUserInvestments(user.uid).then(setInvestments)
+  }, [user])
+
+  useEffect(() => { load() }, [load])
+
+  const active = investments.filter(i => i.status === 'active')
+  const completed = investments.filter(i => i.status === 'completed')
+
+  const handleInvest = async () => {
+    if (!user || !selectedAmount) return
+    setLoading(true)
+    const { error } = await insertInvestment(user.uid, selectedAmount)
+    setLoading(false)
+    if (error) {
+      toast.error(error.includes('Insufficient') ? 'Insufficient balance' : 'Failed to invest')
+    } else {
+      toast.success(`$${selectedAmount} investment started! Returns in 5 hours.`)
+      setModalOpen(false)
+      load()
+      // Refresh profile balance via page reload context
+      window.location.reload()
+    }
+  }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4 py-8">
-        <h1 className="text-4xl font-bold text-white">Investment Plans</h1>
-        <p className="text-white/60 text-lg max-w-2xl mx-auto">
-          Choose the perfect investment plan tailored to your financial goals and investment capacity
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Investment Plans</h1>
+          <p className="text-white/60 mt-1">5-hour investment cycles with real market returns</p>
+        </div>
+        <GlassCard variant="nested" className="flex items-center gap-3 px-5 py-3">
+          <span className="text-white/50 text-sm">Balance</span>
+          <span className="text-white font-bold text-lg">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+        </GlassCard>
       </div>
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {plans.map(plan => (
-          <GlassCard
-            key={plan.id}
-            variant="elevated"
-            hover
-            glow={plan.glow}
-            className="flex flex-col relative overflow-hidden"
-          >
-            {/* Badge */}
-            {plan.id === 'premium' && (
-              <div className="absolute top-4 right-4 bg-neon-green/20 border border-neon-green/50 rounded-lg px-3 py-1 text-xs font-bold text-neon-green">
-                Popular
+      {/* Plan Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {PLANS.map(amount => {
+          const canAfford = balance >= amount
+          return (
+            <GlassCard key={amount} variant="elevated" hover={canAfford}
+              className={`flex flex-col items-center text-center gap-3 py-6 ${!canAfford ? 'opacity-50' : ''}`}>
+              <p className="text-white/50 text-xs uppercase tracking-widest">Invest</p>
+              <p className="text-2xl font-bold text-white">${amount}</p>
+              <p className="text-xs text-white/40">5 hour cycle</p>
+              <GlassButton
+                variant="primary" size="sm" className="w-full mt-2"
+                disabled={!canAfford}
+                onClick={() => { setSelectedAmount(amount); setModalOpen(true) }}
+              >
+                {canAfford ? 'Select' : 'Low Balance'}
+              </GlassButton>
+            </GlassCard>
+          )
+        })}
+      </div>
+
+      {/* Active Investments */}
+      {active.length > 0 && (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <Clock size={18} className="text-yellow-400" /> Active Investments
+          </h2>
+          <div className="space-y-3">
+            {active.map(inv => (
+              <GlassCard key={inv.id} variant="nested" className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                  <div>
+                    <p className="text-white font-semibold">${Number(inv.amount).toLocaleString()}</p>
+                    <p className="text-white/40 text-xs">Started {new Date(inv.start_time).toLocaleTimeString()}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-white/50 text-xs mb-1">Time remaining</p>
+                  <CountdownCell inv={inv} onComplete={load} />
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed Investments */}
+      {completed.length > 0 && (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-[#39ff9e]" /> Completed Investments
+          </h2>
+          <div className="space-y-3">
+            {completed.map(inv => {
+              const pl = Number(inv.profit_loss ?? 0)
+              const isProfit = pl >= 0
+              return (
+                <GlassCard key={inv.id} variant="nested" className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {isProfit
+                      ? <TrendingUp size={18} className="text-[#39ff9e] shrink-0" />
+                      : <TrendingDown size={18} className="text-red-400 shrink-0" />}
+                    <div>
+                      <p className="text-white font-semibold">${Number(inv.amount).toLocaleString()} invested</p>
+                      <p className="text-white/40 text-xs">{new Date(inv.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-bold ${isProfit ? 'text-[#39ff9e]' : 'text-red-400'}`}>
+                      {isProfit ? '+' : ''}${pl.toFixed(2)}
+                    </p>
+                    <p className="text-white/40 text-xs">
+                      Returned: ${(Number(inv.amount) + pl).toFixed(2)}
+                    </p>
+                  </div>
+                </GlassCard>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      <GlassModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Confirm Investment" neonBorder="cyan">
+        {selectedAmount && (
+          <div className="space-y-5">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-white/50">Amount</span>
+                <span className="text-white font-bold">${selectedAmount}</span>
               </div>
-            )}
-
-            <h2 className="text-2xl font-bold text-white mb-2">{plan.name}</h2>
-            <p className="text-white/60 text-sm mb-4">{plan.description}</p>
-
-            {/* APY */}
-            <div className="mb-6">
-              <p className="text-white/60 text-sm">Annual Yield</p>
-              <p className="text-3xl font-bold text-[#00a8ff]">{plan.apy}</p>
+              <div className="flex justify-between text-sm">
+                <span className="text-white/50">Duration</span>
+                <span className="text-white">5 hours</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-white/50">Your Balance</span>
+                <span className="text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex justify-between text-sm">
+                <span className="text-white/50">Balance After</span>
+                <span className={balance - selectedAmount < 0 ? 'text-red-400' : 'text-white'}>
+                  ${(balance - selectedAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
             </div>
-
-            {/* Investment Range */}
-            <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
-              <p className="text-white/60 text-xs uppercase tracking-wide mb-2">
-                Investment Range
-              </p>
-              <p className="text-white font-medium">
-                {plan.min} - {plan.max}
-              </p>
+            <div className="flex items-start gap-2 text-xs text-white/40 bg-white/5 rounded-lg p-3">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              Returns are based on market performance. Profit or loss will be applied after 5 hours.
             </div>
-
-            {/* Features */}
-            <ul className="space-y-3 mb-6 flex-1">
-              {plan.features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-white/70 text-sm">
-                  <Check size={14} className="text-[#39ff9e] mt-0.5 shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-
-            {/* Button */}
-            <GlassButton
-              variant="primary"
-              className="w-full"
-              onClick={() => {
-                setSelectedPlan(plan.name)
-                setInvestmentModalOpen(true)
-              }}
-            >
-              Get Started
+            <GlassButton variant="primary" className="w-full" onClick={handleInvest} disabled={loading}>
+              {loading ? 'Processing...' : `Invest $${selectedAmount}`}
             </GlassButton>
-          </GlassCard>
-        ))}
-      </div>
-
-      {/* Comparison Table */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-white mb-6">Plan Comparison</h2>
-        <div className="overflow-x-auto">
-          <GlassCard variant="nested" className="p-0">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-white/60 text-sm font-semibold">
-                    Feature
-                  </th>
-                  {plans.map(plan => (
-                    <th
-                      key={plan.id}
-                      className="text-center p-4 text-white font-semibold"
-                    >
-                      {plan.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-white/10">
-                  <td className="p-4 text-white/60 text-sm">Annual Percentage Yield</td>
-                  {plans.map(plan => (
-                    <td key={plan.id} className="text-center p-4 text-neon-green font-bold">
-                      {plan.apy}
-                    </td>
-                  ))}
-                </tr>
-                <tr className="border-b border-white/10">
-                  <td className="p-4 text-white/60 text-sm">Minimum Investment</td>
-                  {plans.map(plan => (
-                    <td key={plan.id} className="text-center p-4 text-white">
-                      {plan.min}
-                    </td>
-                  ))}
-                </tr>
-                <tr className="border-b border-white/10">
-                  <td className="p-4 text-white/60 text-sm">Maximum Investment</td>
-                  {plans.map(plan => (
-                    <td key={plan.id} className="text-center p-4 text-white">
-                      {plan.max}
-                    </td>
-                  ))}
-                </tr>
-                <tr className="border-b border-white/10">
-                  <td className="p-4 text-white/60 text-sm">24/7 Support</td>
-                  {plans.map(plan => (
-                    <td key={plan.id} className="text-center p-4">
-                      {['starter', 'growth'].includes(plan.id) ? (
-                        <span className="text-white/60 text-sm">Email only</span>
-                      ) : (
-                        <Check size={16} className="text-[#39ff9e] mx-auto" />
-                      )}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="p-4 text-white/60 text-sm">Portfolio Manager</td>
-                  {plans.map(plan => (
-                    <td key={plan.id} className="text-center p-4">
-                      {['premium', 'exclusive'].includes(plan.id) ? (
-                        <Check size={16} className="text-[#39ff9e] mx-auto" />
-                      ) : (
-                        <span className="text-white/30">—</span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </GlassCard>
-        </div>
-      </div>
-
-      {/* Investment Modal */}
-      <GlassModal
-        isOpen={investmentModalOpen}
-        onClose={() => setInvestmentModalOpen(false)}
-        title={`Invest in ${selectedPlan}`}
-        neonBorder="cyan"
-      >
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              Investment Amount
-            </label>
-            <input
-              type="number"
-              placeholder="Enter amount in USD"
-              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan/50"
-            />
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2">
-            <div className="flex justify-between text-white/80 text-sm">
-              <span>Annual Return:</span>
-              <span className="text-neon-green font-semibold">Calculated</span>
-            </div>
-            <div className="flex justify-between text-white/80 text-sm">
-              <span>Processing Fee:</span>
-              <span className="text-white">0.5%</span>
-            </div>
-          </div>
-          <GlassButton variant="primary" className="w-full">
-            Confirm Investment
-          </GlassButton>
-        </div>
+        )}
       </GlassModal>
     </div>
   )

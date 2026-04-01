@@ -1,6 +1,6 @@
 -- 06: Settings per user
 create table if not exists public.user_settings (
-  user_id            uuid primary key references public.profiles(id) on delete cascade,
+  user_id            text primary key references public.profiles(id) on delete cascade,
   currency           text not null default 'USD',
   language           text not null default 'en',
   theme              text not null default 'dark',

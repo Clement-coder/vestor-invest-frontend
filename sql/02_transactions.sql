@@ -1,7 +1,7 @@
 -- 02: Transactions (withdrawals + credits)
 create table if not exists public.transactions (
   id           text primary key default 'VTX-' || upper(substr(md5(random()::text), 1, 8)),
-  user_id      uuid not null references public.profiles(id) on delete cascade,
+  user_id      text not null references public.profiles(id) on delete cascade,
   type         text not null check (type in ('Withdrawal', 'Credit', 'Deposit')),
   method       text check (method in ('bank', 'crypto', 'admin')),
   amount       numeric(18,2) not null,

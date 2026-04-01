@@ -1,119 +1,169 @@
 'use client'
 
 import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
 import { GlassChart } from '@/components/glass/glass-chart'
-import { GlassModal } from '@/components/glass/glass-modal'
-import { GlassSelect } from '@/components/glass/glass-select'
-import { useState } from 'react'
-import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { TrendingUp, Check, BarChart2, ArrowRightLeft, Wallet } from 'lucide-react'
+import { useAuth } from '@/context/auth-context'
+import { getUserInvestments } from '@/lib/supabase/db'
+import type { Investment } from '@/lib/supabase/db'
+import { useState, useEffect } from 'react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
+import { TrendingUp, TrendingDown, ArrowRightLeft, Clock } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
 
-const plans = [
-  { name: 'Starter', apy: '8.5%', min: '$100', features: ['Basic Analytics', 'Daily Updates', 'Email Support'], glow: 'cyan' },
-  { name: 'Growth', apy: '12.5%', min: '$1,000', features: ['Advanced Analytics', 'Real-time Updates', 'Priority Support'], glow: 'none' },
-  { name: 'Premium', apy: '16.5%', min: '$10,000', features: ['AI Insights', 'Live Trading', 'Dedicated Manager'], glow: 'green' },
-]
-
 export default function DashboardPage() {
-  const [investmentModalOpen, setInvestmentModalOpen] = useState(false)
-  const [dashboardPlan, setDashboardPlan] = useState('starter')
+  const { user, profile } = useAuth()
+  const balance = profile?.balance ?? 0
+  const [investments, setInvestments] = useState<Investment[]>([])
+
+  useEffect(() => {
+    if (user) getUserInvestments(user.uid).then(setInvestments)
+  }, [user])
+
+  const completed = investments.filter(i => i.status === 'completed')
+  const active = investments.filter(i => i.status === 'active')
+
+  const totalInvested = investments.reduce((s, i) => s + Number(i.amount), 0)
+  const totalProfit = completed.reduce((s, i) => s + Number(i.profit_loss ?? 0), 0)
+  const activeValue = active.reduce((s, i) => s + Number(i.amount), 0)
+
+  // Build performance chart data from completed investments
+  const perfData = completed.slice().reverse().map((inv, idx) => ({
+    name: `#${idx + 1}`,
+    value: parseFloat((Number(inv.amount) + Number(inv.profit_loss ?? 0)).toFixed(2)),
+    profit: parseFloat(Number(inv.profit_loss ?? 0).toFixed(2)),
+  }))
+
+  // Build trend data: cumulative balance over time
+  let running = 0
+  const trendData = completed.slice().reverse().map((inv, idx) => {
+    running += Number(inv.profit_loss ?? 0)
+    return { name: `#${idx + 1}`, cumulative: parseFloat(running.toFixed(2)) }
+  })
+
+  const hasData = completed.length > 0
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Portfolio Overview */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6">Portfolio Overview</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <GlassCard variant="elevated" glow="cyan">
-            <p className="text-white/60 text-sm mb-2">Total Balance</p>
-            <p className="text-2xl sm:text-4xl font-bold text-white">$0.00</p>
-            <p className="text-white/40 text-sm mt-2">No activity yet</p>
-          </GlassCard>
-          <GlassCard variant="elevated">
-            <p className="text-white/60 text-sm mb-2">Portfolio Value</p>
-            <p className="text-2xl sm:text-4xl font-bold text-white">$0.00</p>
-            <p className="text-white/40 text-sm mt-2">No investments yet</p>
-          </GlassCard>
-          <GlassCard variant="elevated" glow="green">
-            <p className="text-white/60 text-sm mb-2">Monthly Returns</p>
-            <p className="text-2xl sm:text-4xl font-bold text-white">$0.00</p>
-            <p className="text-white/40 text-sm mt-2">Start investing to earn</p>
-          </GlassCard>
-        </div>
-      </div>
+      <h1 className="text-2xl sm:text-3xl font-bold text-white">Portfolio Overview</h1>
 
-      {/* Charts — empty state */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassChart title="Portfolio Performance" subtitle="No data yet">
-          <div className="h-[300px] flex flex-col items-center justify-center gap-3 text-white/30">
-            <BarChart2 size={48} strokeWidth={1} />
-            <p className="text-sm">Your performance chart will appear here once you invest</p>
-          </div>
-        </GlassChart>
-        <GlassChart title="Investment Trend" subtitle="No data yet">
-          <div className="h-[300px] flex flex-col items-center justify-center gap-3 text-white/30">
-            <TrendingUp size={48} strokeWidth={1} />
-            <p className="text-sm">Investment trends will show here after your first deposit</p>
-          </div>
-        </GlassChart>
-      </div>
-
-      {/* Investment Plans */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-6">Investment Plans</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          {plans.map((plan, index) => (
-            <GlassCard key={index} variant="elevated" hover glow={plan.glow as 'cyan' | 'green' | 'none'} className="flex flex-col">
-              <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-              <p className="text-3xl font-bold text-neon-cyan mb-4">{plan.apy}</p>
-              <p className="text-white/60 text-sm mb-4">Min. Investment: {plan.min}</p>
-              <ul className="space-y-2 mb-6 flex-1">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="text-white/70 text-sm flex items-center gap-2">
-                    <Check size={13} className="text-[#39ff9e] shrink-0" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <GlassButton variant="primary" size="sm" className="w-full" onClick={() => setInvestmentModalOpen(true)}>
-                Invest Now
-              </GlassButton>
-            </GlassCard>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Transactions — empty state */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-6">Recent Transactions</h2>
-        <GlassCard variant="nested" className="flex flex-col items-center justify-center py-16 gap-4 text-white/30">
-          <ArrowRightLeft size={48} strokeWidth={1} />
-          <p className="text-base font-medium">No transactions yet</p>
-          <p className="text-sm text-center max-w-xs">Your recent investment activity will appear here once you make your first transaction.</p>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <GlassCard variant="elevated" glow="cyan">
+          <p className="text-white/60 text-sm mb-2">Total Balance</p>
+          <p className="text-2xl sm:text-4xl font-bold text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-white/40 text-sm mt-2">{active.length > 0 ? `${active.length} active investment${active.length > 1 ? 's' : ''}` : 'Available balance'}</p>
+        </GlassCard>
+        <GlassCard variant="elevated">
+          <p className="text-white/60 text-sm mb-2">Active Investments</p>
+          <p className="text-2xl sm:text-4xl font-bold text-white">${activeValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-white/40 text-sm mt-2">{active.length} plan{active.length !== 1 ? 's' : ''} running</p>
+        </GlassCard>
+        <GlassCard variant="elevated" glow={totalProfit >= 0 ? 'green' : 'none'}>
+          <p className="text-white/60 text-sm mb-2">Total Returns</p>
+          <p className={`text-2xl sm:text-4xl font-bold ${totalProfit > 0 ? 'text-[#39ff9e]' : totalProfit < 0 ? 'text-red-400' : 'text-white'}`}>
+            {totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </p>
+          <p className="text-white/40 text-sm mt-2">{completed.length} completed</p>
         </GlassCard>
       </div>
 
-      {/* Investment Modal */}
-      <GlassModal isOpen={investmentModalOpen} onClose={() => setInvestmentModalOpen(false)} title="Start Investment" neonBorder="cyan">
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">Investment Amount</label>
-            <input type="number" placeholder="Enter amount in USD" className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan/50" />
-          </div>
-          <GlassSelect
-            label="Select Plan"
-            value={dashboardPlan}
-            onChange={setDashboardPlan}
-            options={[
-              { value: 'starter', label: 'Starter - 8.5% APY' },
-              { value: 'growth', label: 'Growth - 12.5% APY' },
-              { value: 'premium', label: 'Premium - 16.5% APY' },
-            ]}
-          />
-          <GlassButton variant="primary" className="w-full">Confirm Investment</GlassButton>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GlassChart title="Portfolio Performance" subtitle={hasData ? `${completed.length} completed investments` : 'No data yet'}>
+          {hasData ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={perfData}>
+                <defs>
+                  <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00a8ff" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#00a8ff" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 11 }} />
+                <YAxis stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: '#0a0f25', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} labelStyle={{ color: '#fff' }} />
+                <Area type="monotone" dataKey="value" stroke="#00a8ff" fill="url(#perfGrad)" strokeWidth={2} name="Returned ($)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex flex-col items-center justify-center gap-3 text-white/30">
+              <p className="text-sm">Chart appears after your first investment completes</p>
+              <Link href="/plans"><span className="text-[#00a8ff] text-sm underline">Start investing →</span></Link>
+            </div>
+          )}
+        </GlassChart>
+
+        <GlassChart title="Profit / Loss Trend" subtitle={hasData ? 'Cumulative returns' : 'No data yet'}>
+          {hasData ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 11 }} />
+                <YAxis stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: '#0a0f25', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} labelStyle={{ color: '#fff' }} />
+                <Line type="monotone" dataKey="cumulative" stroke="#39ff9e" strokeWidth={2} dot={{ fill: '#39ff9e', r: 4 }} name="Cumulative P/L ($)" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex flex-col items-center justify-center gap-3 text-white/30">
+              <p className="text-sm">Trend appears after investments complete</p>
+            </div>
+          )}
+        </GlassChart>
+      </div>
+
+      {/* Recent Activity */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-white">Recent Activity</h2>
+          <Link href="/plans"><GlassCard variant="nested" className="px-4 py-2 text-sm text-[#00a8ff] cursor-pointer hover:bg-white/10 transition-all">+ New Investment</GlassCard></Link>
         </div>
-      </GlassModal>
+
+        {investments.length === 0 ? (
+          <GlassCard variant="nested" className="flex flex-col items-center justify-center py-16 gap-4 text-white/30">
+            <ArrowRightLeft size={48} strokeWidth={1} />
+            <p className="text-base font-medium">No investments yet</p>
+            <Link href="/plans"><span className="text-[#00a8ff] text-sm underline">Browse investment plans →</span></Link>
+          </GlassCard>
+        ) : (
+          <div className="space-y-2">
+            {investments.slice(0, 8).map(inv => {
+              const pl = Number(inv.profit_loss ?? 0)
+              const isActive = inv.status === 'active'
+              const isProfit = pl >= 0
+              return (
+                <GlassCard key={inv.id} variant="nested" className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    {isActive
+                      ? <Clock size={16} className="text-yellow-400 shrink-0" />
+                      : isProfit
+                        ? <TrendingUp size={16} className="text-[#39ff9e] shrink-0" />
+                        : <TrendingDown size={16} className="text-red-400 shrink-0" />}
+                    <div>
+                      <p className="text-white text-sm font-semibold">${Number(inv.amount).toLocaleString()} investment</p>
+                      <p className="text-white/40 text-xs">{new Date(inv.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {isActive ? (
+                      <span className="text-xs bg-yellow-400/10 text-yellow-400 px-2 py-1 rounded-full">Active</span>
+                    ) : (
+                      <>
+                        <p className={`font-bold text-sm ${isProfit ? 'text-[#39ff9e]' : 'text-red-400'}`}>
+                          {isProfit ? '+' : ''}${pl.toFixed(2)}
+                        </p>
+                        <p className="text-white/40 text-xs">Returned ${(Number(inv.amount) + pl).toFixed(2)}</p>
+                      </>
+                    )}
+                  </div>
+                </GlassCard>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

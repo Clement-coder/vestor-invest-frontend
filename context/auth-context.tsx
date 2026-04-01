@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, onAuthStateChanged } from 'firebase/auth'
 import { getFirebase } from '@/lib/firebase'
-import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/db'
 
 interface AuthContextType {
@@ -27,22 +26,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser)
       if (firebaseUser) {
         try {
-          const sb = createClient()
-          const { data: existing } = await sb.from('profiles').select('*').eq('id', firebaseUser.uid).single()
-          if (!existing) {
-            await sb.from('profiles').upsert({
+          const res = await fetch('/api/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               id: firebaseUser.uid,
-              email: firebaseUser.email!,
+              email: firebaseUser.email,
               full_name: firebaseUser.displayName,
               avatar_url: firebaseUser.photoURL,
-            })
-            const { data: newProfile } = await sb.from('profiles').select('*').eq('id', firebaseUser.uid).single()
-            setProfile(newProfile)
-          } else {
-            setProfile(existing)
-          }
+            }),
+          })
+          if (res.ok) setProfile(await res.json())
         } catch {
-          // Supabase not set up yet — app still works without profile
           setProfile(null)
         }
       } else {

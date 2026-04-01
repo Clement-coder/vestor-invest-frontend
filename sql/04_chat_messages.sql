@@ -1,7 +1,7 @@
 -- 04: Chat messages (contact agent)
 create table if not exists public.chat_messages (
   id         bigserial primary key,
-  user_id    uuid not null references public.profiles(id) on delete cascade,
+  user_id    text not null references public.profiles(id) on delete cascade,
   role       text not null check (role in ('user', 'agent')),
   text       text,
   image_url  text,
