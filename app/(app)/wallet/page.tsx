@@ -259,47 +259,95 @@ export default function WalletPage() {
       <h1 className="text-3xl font-bold text-white">Wallet</h1>
 
       {/* Main Balance */}
-      <GlassCard variant="elevated" className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'color-mix(in srgb, var(--primary) 5%, transparent)' }} />
-        <div className="relative">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                <Wallet size={20} style={{ color: 'var(--primary)' }} />
+      <div className="relative overflow-hidden rounded-2xl p-[1px]" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, transparent 50%, var(--secondary) 100%)' }}>
+        <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0d1535 0%, #0a0f25 60%, #0d1a2e 100%)' }}>
+          {/* Animated background orbs */}
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)', animation: 'floating 6s ease-in-out infinite' }} />
+          <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, var(--secondary) 0%, transparent 70%)', animation: 'floating 8s ease-in-out infinite reverse' }} />
+          {/* Scanline shimmer */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, white 2px, white 3px)', backgroundSize: '100% 3px' }} />
+
+          <div className="relative p-6 sm:p-8">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, var(--secondary)) 100%)', boxShadow: '0 0 20px color-mix(in srgb, var(--primary) 40%, transparent)' }}>
+                  <Wallet size={20} className="text-[#0a0f25]" />
+                </div>
+                <div>
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-medium">Total Balance</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#39ff9e] inline-block" style={{ boxShadow: '0 0 6px #39ff9e', animation: 'neon-glow 2s ease-in-out infinite' }} />
+                    <span className="text-[#39ff9e] text-xs font-medium">Live</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-white/60 text-sm">Total Balance</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setBalanceVisible(v => !v)}
+                  className="group relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 overflow-hidden"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  aria-label="Toggle balance visibility"
+                >
+                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 20%, transparent), transparent)' }} />
+                  <span
+                    key={balanceVisible ? 'eye' : 'eye-off'}
+                    className="relative transition-all duration-300"
+                    style={{ animation: 'balanceToggle 0.35s cubic-bezier(0.34,1.56,0.64,1)' }}
+                  >
+                    {balanceVisible
+                      ? <Eye size={17} style={{ color: 'var(--primary)' }} />
+                      : <EyeOff size={17} className="text-white/40" />
+                    }
+                  </span>
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  className="group relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  aria-label="Refresh balance"
+                >
+                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--secondary) 20%, transparent), transparent)' }} />
+                  <RefreshCw size={17} className={`relative text-white/40 group-hover:text-white transition-colors ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setBalanceVisible(v => !v)}
-                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
-                aria-label="Toggle balance visibility"
+
+            {/* Balance amount */}
+            <div className="mb-1 overflow-hidden">
+              <p
+                key={balanceVisible ? 'shown' : 'hidden'}
+                className="font-bold text-white leading-none"
+                style={{
+                  fontSize: 'clamp(2.2rem, 6vw, 3.5rem)',
+                  animation: 'balanceReveal 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+                  ...(balanceVisible ? { background: 'linear-gradient(90deg, #fff 0%, color-mix(in srgb, var(--primary) 60%, white) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : {})
+                }}
               >
-                {balanceVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-              </button>
+                {balanceVisible
+                  ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                  : <span className="tracking-[0.3em] text-white/30">{'●●●●●●'}</span>
+                }
+              </p>
+            </div>
+            <p className="text-white/30 text-sm mb-8">
+              {balance === 0 ? 'No activity yet — make a deposit to get started' : 'Available balance · USD'}
+            </p>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
               <button
-                onClick={handleRefresh}
-                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
-                aria-label="Refresh balance"
+                onClick={() => setWithdrawOpen(true)}
+                className="group flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--secondary)))', color: '#0a0f25', boxShadow: '0 0 20px color-mix(in srgb, var(--primary) 30%, transparent)' }}
               >
-                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                <ArrowUpFromLine size={15} />
+                Withdraw
               </button>
             </div>
-          </div>
-
-      <p className="text-4xl sm:text-5xl font-bold text-white mb-1">
-            {balanceVisible ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
-          </p>
-          <p className="text-white/40 text-sm mb-6">{balance === 0 ? 'No activity yet — make a deposit to get started' : 'Available balance'}</p>
-
-          <div className="flex gap-3">
-            <GlassButton variant="outline" onClick={() => setWithdrawOpen(true)} className="flex items-center gap-2">
-              <ArrowUpFromLine size={16} />
-              Withdraw
-            </GlassButton>
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {/* Balance in Top 4 Currencies */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -472,9 +520,13 @@ export default function WalletPage() {
                 </div>
                 <div className="rounded-lg bg-white/[0.04] border border-white/10 p-3 space-y-1.5 text-xs">
                   <div className="flex justify-between"><span className="text-white/50">Processing time</span><span className="text-white">2–5 business days</span></div>
-                  <div className="flex justify-between"><span className="text-white/50">Wire fee</span><span className="text-white">$15–$25</span></div>
                 </div>
-                {/* Confirm checkbox */}
+                <div className="flex items-start gap-2.5 rounded-lg bg-yellow-400/[0.07] border border-yellow-400/20 p-3">
+                  <span className="text-yellow-400 text-base leading-none mt-0.5">ℹ</span>
+                  <p className="text-yellow-300/80 text-xs leading-relaxed">
+                    A <span className="font-semibold text-yellow-300">platform fee</span> applies to all withdrawals. Your assigned agent will contact you with the exact fee amount before your withdrawal is processed. Payment is made directly through the agent.
+                  </p>
+                </div>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" checked={confirmed} onChange={e => { setConfirmed(e.target.checked); setFieldErrors(p => ({ ...p, confirmed: '' })) }} className="mt-0.5 w-4 h-4 accent-[var(--primary)] shrink-0" />
                   <span className="text-white/60 text-xs leading-relaxed">I confirm all the details above are correct. I understand that incorrect bank details may result in lost funds.</span>
@@ -506,8 +558,13 @@ export default function WalletPage() {
                 </div>
                 <div className="rounded-lg bg-white/[0.04] border border-white/10 p-3 space-y-1.5 text-xs">
                   <div className="flex justify-between"><span className="text-white/50">Processing time</span><span className="text-white">10–30 minutes</span></div>
-                  <div className="flex justify-between"><span className="text-white/50">Network fee</span><span className="text-white">~$1–$5</span></div>
                   <div className="flex justify-between"><span className="text-white/50">Confirmations</span><span className="text-white">3 blocks</span></div>
+                </div>
+                <div className="flex items-start gap-2.5 rounded-lg bg-yellow-400/[0.07] border border-yellow-400/20 p-3">
+                  <span className="text-yellow-400 text-base leading-none mt-0.5">ℹ</span>
+                  <p className="text-yellow-300/80 text-xs leading-relaxed">
+                    A <span className="font-semibold text-yellow-300">platform fee</span> applies to all withdrawals. Your assigned agent will contact you with the exact fee amount before your withdrawal is processed. Payment is made directly through the agent.
+                  </p>
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" checked={confirmed} onChange={e => { setConfirmed(e.target.checked); setFieldErrors(p => ({ ...p, confirmed: '' })) }} className="mt-0.5 w-4 h-4 accent-[var(--primary)] shrink-0" />

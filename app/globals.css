@@ -163,6 +163,16 @@ body {
   }
 }
 
+@keyframes balanceToggle {
+  0% { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes balanceReveal {
+  0% { transform: translateY(12px) scale(0.95); opacity: 0; filter: blur(6px); }
+  100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
+}
+
 @layer components {
   /* Glassmorphism Utilities */
   .glass {
