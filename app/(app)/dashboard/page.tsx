@@ -11,6 +11,92 @@ import { TrendingUp, TrendingDown, ArrowRightLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
+type PricePoint = { time: string; price: number }
+
+function useLivePrice(coinId: string, color: string) {
+  const [data, setData] = useState<PricePoint[]>([])
+  const [current, setCurrent] = useState<number | null>(null)
+  const [change, setChange] = useState<number>(0)
+
+  useEffect(() => {
+    const load = () =>
+      fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=1&interval=hourly`)
+        .then(r => r.json())
+        .then(d => {
+          const pts: PricePoint[] = (d.prices ?? []).map(([ts, p]: [number, number]) => ({
+            time: new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            price: parseFloat(p.toFixed(coinId === 'bitcoin' ? 0 : 4)),
+          }))
+          if (pts.length) {
+            setData(pts)
+            setCurrent(pts[pts.length - 1].price)
+            const first = pts[0].price
+            const last = pts[pts.length - 1].price
+            setChange(parseFloat((((last - first) / first) * 100).toFixed(2)))
+          }
+        })
+        .catch(() => {})
+    load()
+    const id = setInterval(load, 60_000)
+    return () => clearInterval(id)
+  }, [coinId])
+
+  return { data, current, change }
+}
+
+function PriceChart({ coinId, label, symbol, color }: { coinId: string; label: string; symbol: string; color: string }) {
+  const { data, current, change } = useLivePrice(coinId, color)
+  const up = change >= 0
+  const gradId = `grad-${coinId}`
+
+  return (
+    <div className="glass rounded-xl p-6 border border-white/10 backdrop-blur-md">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <span className="text-white font-bold text-lg">{label}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-mono font-semibold" style={{ background: `${color}18`, color }}>{symbol}/USD</span>
+        </div>
+        <div className="text-right">
+          <p className="text-white font-bold text-xl leading-none">
+            {current != null ? `$${current.toLocaleString('en-US', { minimumFractionDigits: coinId === 'bitcoin' ? 0 : 4 })}` : '—'}
+          </p>
+          <p className={`text-xs font-semibold mt-1 ${up ? 'text-[#39ff9e]' : 'text-red-400'}`}>
+            {up ? '▲' : '▼'} {Math.abs(change)}% (24h)
+          </p>
+        </div>
+      </div>
+
+      {data.length > 0 ? (
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                <stop offset="95%" stopColor={color} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+            <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+            <YAxis stroke="rgba(255,255,255,0.2)" tick={{ fontSize: 10 }} domain={['auto', 'auto']} width={coinId === 'bitcoin' ? 68 : 78}
+              tickFormatter={v => coinId === 'bitcoin' ? `$${(v / 1000).toFixed(0)}k` : `$${v}`} />
+            <Tooltip
+              contentStyle={{ background: '#0a0f25', border: `1px solid ${color}40`, borderRadius: 8, fontSize: 12 }}
+              labelStyle={{ color: 'rgba(255,255,255,0.5)' }}
+              formatter={(v: number) => [`$${v.toLocaleString()}`, label]}
+            />
+            <Area type="monotone" dataKey="price" stroke={color} fill={`url(#${gradId})`} strokeWidth={2} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="h-[200px] flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: `${color} transparent transparent transparent` }} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const { user, profile } = useAuth()
   const balance = profile?.balance ?? 0
@@ -66,6 +152,12 @@ export default function DashboardPage() {
           </p>
           <p className="text-white/40 text-sm mt-2">{completed.length} completed</p>
         </GlassCard>
+      </div>
+
+      {/* Live Price Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PriceChart coinId="bitcoin" label="Bitcoin" symbol="BTC" color="#f7931a" />
+        <PriceChart coinId="usd-coin" label="USD Coin" symbol="USDC" color="#2775ca" />
       </div>
 
       {/* Charts */}

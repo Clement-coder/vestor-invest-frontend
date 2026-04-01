@@ -408,8 +408,13 @@ export default function WalletPage() {
                 <img src={cur.logo} alt={cur.code} width={22} height={22} className={cur.round ? 'rounded-full' : 'rounded-sm object-cover'} style={{ width: 22, height: 22 }} />
                 <p className="text-white/50 text-xs truncate">{cur.name}</p>
               </div>
-              <p className="text-white font-bold text-base sm:text-lg truncate">
-                {balanceVisible ? `${cur.symbol}${formatted}` : '••••'}
+              <p className="text-white font-bold text-base sm:text-lg truncate overflow-hidden">
+                <span
+                  key={`${cur.code}-${balanceVisible}`}
+                  style={{ display: 'inline-block', animation: 'reveal-up 0.4s cubic-bezier(0.22,1,0.36,1)' }}
+                >
+                  {balanceVisible ? `${cur.symbol}${formatted}` : <span style={{ color: 'rgba(0,168,255,0.25)', letterSpacing: '0.15em' }}>████</span>}
+                </span>
               </p>
               <p className="text-white/30 text-xs">{cur.code}</p>
             </GlassCard>
