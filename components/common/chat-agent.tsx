@@ -42,6 +42,17 @@ export default function ChatAgent() {
     })
   }, [user])
 
+  // Poll for new admin replies every 5 seconds when chat is open
+  useEffect(() => {
+    if (!user || !open) return
+    const id = setInterval(() => {
+      getChatMessages(user.uid).then(msgs => {
+        if (msgs.length > 0) setMessages(msgs)
+      })
+    }, 5000)
+    return () => clearInterval(id)
+  }, [user, open])
+
   // ── draggable FAB ──
   const [fabSide, setFabSide] = useState<'left' | 'right'>('right')
   const [fabY, setFabY] = useState(24)
@@ -106,15 +117,19 @@ export default function ChatAgent() {
     setMessages(prev => [...prev, optimistic])
     setInput('')
     await insertChatMessage(msg)
-    setTimeout(async () => {
-      const agentMsg: Omit<ChatMessage, 'id' | 'created_at'> = {
-        user_id: user.uid, role: 'agent', image_url: null,
-        text: 'Thanks for reaching out! Our team will get back to you shortly. For urgent matters, please contact support@vestorinvest.com.',
-      }
-      const agentOptimistic: ChatMessage = { ...agentMsg, id: Date.now() + 1, created_at: new Date().toISOString() }
-      setMessages(prev => [...prev, agentOptimistic])
-      await insertChatMessage(agentMsg)
-    }, 800)
+
+    // Only send auto-reply on the very first user message
+    const hasRealMessages = messages.filter(m => m.id !== 0 && m.role === 'user').length === 0
+    if (hasRealMessages) {
+      setTimeout(async () => {
+        const agentMsg: Omit<ChatMessage, 'id' | 'created_at'> = {
+          user_id: user.uid, role: 'agent', image_url: null,
+          text: "Thanks for reaching out! Our support team has been notified and will reply to you shortly.",
+        }
+        setMessages(prev => [...prev, { ...agentMsg, id: Date.now() + 1, created_at: new Date().toISOString() }])
+        await insertChatMessage(agentMsg)
+      }, 800)
+    }
   }
 
   const sendImage = async (file: File) => {

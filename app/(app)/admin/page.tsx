@@ -48,11 +48,27 @@ export default function AdminPage() {
 
   useEffect(() => { getAllProfiles().then(setUsers) }, [])
   useEffect(() => { if (tab === 'transactions') getAllTransactions().then(setTransactions) }, [tab])
-  useEffect(() => { if (tab === 'messages') getChatUsers().then(setChatUsers as any) }, [tab])
+  useEffect(() => {
+    if (tab === 'messages') {
+      getChatUsers().then((rawUsers: any[]) => {
+        // enrich with profile data from already-loaded users list
+        getAllProfiles().then(profiles => {
+          const enriched = rawUsers.map((cu: any) => {
+            const p = profiles.find(u => u.id === cu.user_id)
+            return { user_id: cu.user_id, profiles: p ? { email: p.email, full_name: p.full_name } : null }
+          })
+          setChatUsers(enriched)
+        })
+      })
+    }
+  }, [tab])
 
+  // Poll for new messages every 5s when messages tab is open
   useEffect(() => {
     if (!selectedChatUser) return
     getChatMessages(selectedChatUser).then(setChatMsgs)
+    const id = setInterval(() => getChatMessages(selectedChatUser).then(setChatMsgs), 5000)
+    return () => clearInterval(id)
   }, [selectedChatUser])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMsgs])

@@ -122,14 +122,11 @@ export async function getAllChatMessages() {
 }
 
 export async function getChatUsers() {
-  const sb = createClient()
-  const { data } = await sb
-    .from('chat_messages')
-    .select('user_id, profiles(email, full_name)')
-    .eq('role', 'user')
-    .order('created_at', { ascending: false })
-  const seen = new Set<string>()
-  return (data ?? []).filter((m: any) => { if (seen.has(m.user_id)) return false; seen.add(m.user_id); return true })
+  try {
+    const all = await dbProxy({ table: 'chat_messages', action: 'select', order: { col: 'created_at', asc: false } })
+    const seen = new Set<string>()
+    return (all as any[]).filter(m => m.role === 'user' && (!seen.has(m.user_id) ? seen.add(m.user_id) || true : false))
+  } catch { return [] }
 }
 
 // ── Settings ──────────────────────────────────────────────
