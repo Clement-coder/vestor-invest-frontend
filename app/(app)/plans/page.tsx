@@ -4,7 +4,7 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { useAuth } from '@/context/auth-context'
-import { insertInvestment, getUserInvestments, completeInvestment } from '@/lib/supabase/db'
+import { insertInvestment, getUserInvestments, completeInvestment, insertTransaction } from '@/lib/supabase/db'
 import type { Investment } from '@/lib/supabase/db'
 import { useState, useEffect, useCallback } from 'react'
 import { TrendingUp, TrendingDown, Clock, CheckCircle2, Wallet, ShieldCheck, Activity, Zap } from 'lucide-react'
@@ -45,7 +45,20 @@ function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () =>
       const pct = isProfit ? 0.05 + Math.random() * 0.20 : -(0.02 + Math.random() * 0.13)
       const profitLoss = parseFloat((inv.amount * pct).toFixed(2))
       completeInvestment(inv.id, profitLoss).then(({ error }) => {
-        if (!error) { onComplete(); refreshProfile() }
+        if (!error) {
+          // Record credit transaction (amount returned + profit/loss)
+          insertTransaction({
+            id: 'TXN-' + Math.random().toString(36).slice(2, 10).toUpperCase(),
+            user_id: inv.user_id,
+            type: 'Credit',
+            method: 'admin',
+            amount: parseFloat((inv.amount + profitLoss).toFixed(2)),
+            status: 'Completed',
+            note: `Investment returned — ${profitLoss >= 0 ? '+' : ''}$${profitLoss.toFixed(2)} ${profitLoss >= 0 ? 'profit' : 'loss'}`,
+          })
+          onComplete()
+          refreshProfile()
+        }
       })
     }
   }, [remaining, inv, onComplete, refreshProfile])
@@ -83,11 +96,21 @@ export default function PlansPage() {
   const handleInvest = async () => {
     if (!user || !selectedPlan) return
     setLoading(true)
-    const { error } = await insertInvestment(user.uid, selectedPlan.amount)
+    const { data: inv, error } = await insertInvestment(user.uid, selectedPlan.amount)
     setLoading(false)
     if (error) {
       toast.error(error.includes('Insufficient') ? 'Insufficient balance' : 'Failed to start investment')
     } else {
+      // Record debit transaction
+      insertTransaction({
+        id: 'TXN-' + Math.random().toString(36).slice(2, 10).toUpperCase(),
+        user_id: user.uid,
+        type: 'Debit',
+        method: 'admin',
+        amount: selectedPlan.amount,
+        status: 'Completed',
+        note: `Investment placed — ${selectedPlan.label} plan`,
+      })
       toast.success(`$${selectedPlan.amount} investment started! Returns in 5 hours.`)
       setModalOpen(false)
       load()

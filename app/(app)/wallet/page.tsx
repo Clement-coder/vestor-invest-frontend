@@ -448,7 +448,9 @@ export default function WalletPage() {
                   <TrendingDown size={16} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium">{tx.method === 'bank' ? 'Bank Wire' : tx.type === 'Credit' ? 'Account Credit' : 'Crypto'} {tx.type}</p>
+                  <p className="text-white text-sm font-medium">
+                    {tx.type === 'Credit' ? '💰 Investment Return' : tx.type === 'Debit' ? '📤 Investment Placed' : tx.method === 'bank' ? 'Bank Wire' : 'Crypto'} {tx.type !== 'Credit' && tx.type !== 'Debit' ? tx.type : ''}
+                  </p>
                   <p className="text-white/40 text-xs">{new Date(tx.created_at).toLocaleString()}</p>
                 </div>
                 <div className="text-right shrink-0">

@@ -25,7 +25,7 @@ export type Profile = {
 export type Transaction = {
   id: string
   user_id: string
-  type: 'Withdrawal' | 'Credit' | 'Deposit'
+  type: 'Withdrawal' | 'Credit' | 'Deposit' | 'Debit'
   method: 'bank' | 'crypto' | 'admin' | null
   amount: number
   status: 'Pending' | 'Completed' | 'Failed'
