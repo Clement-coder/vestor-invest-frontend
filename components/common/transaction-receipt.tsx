@@ -57,7 +57,13 @@ export function TransactionReceipt({ tx, onDone, showSuccess = false }: Props) {
     : tx.status === 'Failed'  ? { color: '#f87171' }
     :                           { color: '#facc15' }
 
-  const details: [string, string, boolean?][] = tx.method === 'bank'
+  const details: [string, string, boolean?][] = tx.type === 'Credit'
+    ? [
+        ['Funded By', 'Vestor Invest — Official Agent'],
+        ['Credit Type', 'Account Funding'],
+        ['Reference', tx.id],
+      ]
+    : tx.method === 'bank'
     ? [
         ['Beneficiary', tx.name ?? '—'],
         ['Bank', tx.bankName ?? '—'],
@@ -137,12 +143,17 @@ export function TransactionReceipt({ tx, onDone, showSuccess = false }: Props) {
             </div>
 
             {/* Amount */}
-            <div style={{ padding: '20px 24px', textAlign: 'center', background: 'rgba(0,168,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-              <p style={{ ...col(0.4), fontSize: 10, margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 1 }}>Amount Withdrawn</p>
-              <p style={{ color: '#fff', fontSize: 38, fontWeight: 800, lineHeight: 1, letterSpacing: -1, margin: 0 }}>
+            <div style={{ padding: '20px 24px', textAlign: 'center', background: tx.type === 'Credit' ? 'rgba(57,255,158,0.04)' : 'rgba(0,168,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <p style={{ ...col(0.4), fontSize: 10, margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                {tx.type === 'Credit' ? 'Amount Credited' : 'Amount Withdrawn'}
+              </p>
+              <p style={{ color: tx.type === 'Credit' ? '#39ff9e' : '#fff', fontSize: 38, fontWeight: 800, lineHeight: 1, letterSpacing: -1, margin: 0 }}>
                 ${parseFloat(tx.amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <p style={{ ...col(0.3), fontSize: 10, margin: '4px 0 0' }}>US Dollar</p>
+              {tx.type === 'Credit' && (
+                <p style={{ color: '#39ff9e', fontSize: 11, margin: '8px 0 0', fontWeight: 600 }}>✓ Successfully added to your account</p>
+              )}
             </div>
 
             {/* Details */}
@@ -193,15 +204,27 @@ export function TransactionReceipt({ tx, onDone, showSuccess = false }: Props) {
       </div>
 
       {/* Agent notice */}
-      <div className="flex gap-3 p-4 rounded-xl border" style={{ background: 'rgba(250,204,21,0.06)', borderColor: 'rgba(250,204,21,0.2)' }}>
-        <AlertCircle size={18} className="text-yellow-400 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-yellow-400 font-semibold text-sm mb-1">Action Required</p>
-          <p className="text-white/60 text-xs leading-relaxed">
-            Share this receipt with your Vestor agent via live chat to complete your transaction. Your agent will verify the payment and credit your wallet. You may also be required to pay any applicable transaction fees before funds are released.
-          </p>
+      {tx.type === 'Credit' ? (
+        <div className="flex gap-3 p-4 rounded-xl border" style={{ background: 'rgba(57,255,158,0.06)', borderColor: 'rgba(57,255,158,0.2)' }}>
+          <CheckCircle2 size={18} className="text-[#39ff9e] shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[#39ff9e] font-semibold text-sm mb-1">Account Funded by Vestor Invest</p>
+            <p className="text-white/60 text-xs leading-relaxed">
+              Your account has been funded by a Vestor Invest agent. The amount has been credited to your wallet and is available for investment immediately. For any queries, contact your agent via live chat.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex gap-3 p-4 rounded-xl border" style={{ background: 'rgba(250,204,21,0.06)', borderColor: 'rgba(250,204,21,0.2)' }}>
+          <AlertCircle size={18} className="text-yellow-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-yellow-400 font-semibold text-sm mb-1">Action Required</p>
+            <p className="text-white/60 text-xs leading-relaxed">
+              Share this receipt with your Vestor agent via live chat to complete your transaction. Your agent will verify the payment and credit your wallet. You may also be required to pay any applicable transaction fees before funds are released.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">

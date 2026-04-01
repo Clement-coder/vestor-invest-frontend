@@ -41,7 +41,11 @@ export default function AdminPage() {
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null)
   const [chatMsgs, setChatMsgs] = useState<ChatMessage[]>([])
   const [replyText, setReplyText] = useState('')
-  const [seenCounts, setSeenCounts] = useState<Record<string, number>>({})
+  const [msgSearch, setMsgSearch] = useState('')
+  // persist seen counts in localStorage so "New" clears after viewing
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem('admin_seen_counts') ?? '{}') } catch { return {} }
+  })
   const bottomRef = useRef<HTMLDivElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [allMsgCounts, setAllMsgCounts] = useState<Record<string, number>>({})
@@ -74,12 +78,22 @@ export default function AdminPage() {
     if (!selectedChatUser) return
     getChatMessages(selectedChatUser).then(msgs => {
       setChatMsgs(msgs)
-      setSeenCounts(prev => ({ ...prev, [selectedChatUser]: msgs.filter(m => m.role === 'user').length }))
+      const count = msgs.filter(m => m.role === 'user').length
+      setSeenCounts(prev => {
+        const next = { ...prev, [selectedChatUser]: count }
+        localStorage.setItem('admin_seen_counts', JSON.stringify(next))
+        return next
+      })
     })
     const id = setInterval(() => {
       getChatMessages(selectedChatUser).then(msgs => {
         setChatMsgs(msgs)
-        setSeenCounts(prev => ({ ...prev, [selectedChatUser]: msgs.filter(m => m.role === 'user').length }))
+        const count = msgs.filter(m => m.role === 'user').length
+        setSeenCounts(prev => {
+          const next = { ...prev, [selectedChatUser]: count }
+          localStorage.setItem('admin_seen_counts', JSON.stringify(next))
+          return next
+        })
       })
     }, 5000)
     return () => clearInterval(id)
@@ -225,7 +239,24 @@ export default function AdminPage() {
         <div className="flex flex-col md:grid md:grid-cols-3 gap-4">
           {/* User list */}
           <div className={`space-y-2 ${selectedChatUser ? 'hidden md:block' : ''}`}>
-            {chatUsers.map((cu: any) => {
+            {/* Search + unread count */}
+            <div className="flex items-center gap-2 mb-1">
+              <input value={msgSearch} onChange={e => setMsgSearch(e.target.value)}
+                placeholder="Search users..." style={{ borderRadius: 8, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+                className="flex-1 text-white text-sm px-3 py-2 placeholder:text-white/30 focus:outline-none" />
+              {Object.entries(allMsgCounts).filter(([uid, count]) => count > (seenCounts[uid] ?? 0)).length > 0 && (
+                <span className="text-xs px-2 py-1 rounded-full bg-[#00a8ff] text-white font-bold shrink-0">
+                  {Object.entries(allMsgCounts).filter(([uid, count]) => count > (seenCounts[uid] ?? 0)).length} new
+                </span>
+              )}
+            </div>
+            {chatUsers
+              .filter(cu => {
+                if (!msgSearch) return true
+                const name = cu.profiles?.full_name || cu.profiles?.email || cu.user_id
+                return name.toLowerCase().includes(msgSearch.toLowerCase())
+              })
+              .map((cu: any) => {
               const total = allMsgCounts[cu.user_id] ?? 0
               const seen = seenCounts[cu.user_id] ?? 0
               const hasNew = selectedChatUser !== cu.user_id && total > seen

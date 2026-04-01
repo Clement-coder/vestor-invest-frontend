@@ -31,7 +31,9 @@ export default function ChatAgent() {
   const [listening, setListening] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([initialMessage])
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [unreadAgent, setUnreadAgent] = useState(0)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const prevAgentCount = useRef(0)
   const recognitionRef = useRef<any>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -39,16 +41,53 @@ export default function ChatAgent() {
   useEffect(() => {
     if (!user) return
     getChatMessages(user.uid).then(msgs => {
-      if (msgs.length > 0) setMessages(msgs)
+      if (msgs.length > 0) {
+        setMessages(msgs)
+        prevAgentCount.current = msgs.filter(m => m.role === 'agent' && m.id !== 0).length
+      }
     })
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
   }, [user])
+
+  // Poll even when chat is closed — for badge + notification
+  useEffect(() => {
+    if (!user || open) return
+    const id = setInterval(() => {
+      getChatMessages(user.uid).then(msgs => {
+        const agentCount = msgs.filter(m => m.role === 'agent' && m.id !== 0).length
+        if (agentCount > prevAgentCount.current && prevAgentCount.current > 0) {
+          setUnreadAgent(n => n + (agentCount - prevAgentCount.current))
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Vestor Support', { body: 'You have a new message from your agent.', icon: '/VestorLog.png' })
+          }
+        }
+        prevAgentCount.current = agentCount
+        if (msgs.length > 0) setMessages(msgs)
+      })
+    }, 10000)
+    return () => clearInterval(id)
+  }, [user, open])
 
   // Poll for new admin replies every 5 seconds when chat is open
   useEffect(() => {
     if (!user || !open) return
     const id = setInterval(() => {
       getChatMessages(user.uid).then(msgs => {
-        if (msgs.length > 0) setMessages(msgs)
+        if (msgs.length > 0) {
+          const agentCount = msgs.filter(m => m.role === 'agent' && m.id !== 0).length
+          if (agentCount > prevAgentCount.current && prevAgentCount.current > 0) {
+            // New agent reply arrived
+            setUnreadAgent(n => n + (agentCount - prevAgentCount.current))
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification('Vestor Support', { body: 'You have a new message from your agent.', icon: '/VestorLog.png' })
+            }
+          }
+          prevAgentCount.current = agentCount
+          setMessages(msgs)
+        }
       })
     }, 5000)
     return () => clearInterval(id)
@@ -85,6 +124,7 @@ export default function ChatAgent() {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
+      setUnreadAgent(0) // clear badge when opened
       requestAnimationFrame(() => setVisible(true))
     } else {
       setVisible(false)
@@ -188,6 +228,11 @@ export default function ChatAgent() {
         aria-label="Open chat"
       >
         {open ? <X size={22} /> : <MessageCircle size={22} style={{ color: 'var(--primary)' }} />}
+        {!open && unreadAgent > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#00a8ff] text-white text-[10px] font-bold flex items-center justify-center border-2 border-[#0a0f25]">
+            {unreadAgent}
+          </span>
+        )}
       </button>
 
       {/* Chat Panel */}
