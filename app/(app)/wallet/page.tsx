@@ -6,7 +6,7 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { GlassSelect } from '@/components/glass/glass-select'
 import { TransactionReceipt } from '@/components/common/transaction-receipt'
-import { insertTransaction, getTransactions } from '@/lib/supabase/db'
+import { insertTransaction, getTransactions, getPaymentPin, savePaymentPin } from '@/lib/supabase/db'
 import { useAuth } from '@/context/auth-context'
 import type { Transaction } from '@/lib/supabase/db'
 import Link from 'next/link'
@@ -69,11 +69,22 @@ export default function WalletPage() {
   const [bankFields, setBankFields] = useState({ name: '', bankName: '', swift: '', iban: '', routing: '', purpose: 'personal' })
   const [confirmed, setConfirmed] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState<'form' | 'confirm' | 'pin' | 'pin-confirm' | 'success'>('form')
-  // persist PIN in localStorage so it survives page reloads
+  // persist PIN — load from DB, fall back to localStorage
   const [savedPin, setSavedPin] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
     return localStorage.getItem('vestor_payment_pin')
   })
+
+  // Load PIN from DB on mount
+  useEffect(() => {
+    if (!user) return
+    getPaymentPin(user.uid).then(pin => {
+      if (pin) {
+        setSavedPin(pin)
+        localStorage.setItem('vestor_payment_pin', pin)
+      }
+    })
+  }, [user])
   const [pin, setPin] = useState(['', '', '', ''])
   const [pinConfirm, setPinConfirm] = useState(['', '', '', ''])
   const [pinError, setPinError] = useState('')
@@ -149,6 +160,7 @@ export default function WalletPage() {
     const newPin = pin.join('')
     localStorage.setItem('vestor_payment_pin', newPin)
     setSavedPin(newPin)
+    if (user) savePaymentPin(user.uid, newPin)
     saveTxAndSuccess()
   }
 

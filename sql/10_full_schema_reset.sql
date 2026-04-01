@@ -243,6 +243,7 @@ create table public.user_settings (
   security_2fa             boolean not null default false,
   security_login_alerts    boolean not null default true,
   security_session_timeout boolean not null default true,
+  payment_pin              text,
   updated_at               timestamptz not null default now()
 );
 

@@ -138,6 +138,17 @@ export async function upsertSettings(settings: Partial<UserSettings> & { user_id
   return dbProxy({ table: 'user_settings', action: 'upsert', payload: settings })
 }
 
+export async function getPaymentPin(userId: string): Promise<string | null> {
+  try {
+    const data = await dbProxy({ table: 'user_settings', action: 'select', filters: [['user_id', userId]], single: true })
+    return data?.payment_pin ?? null
+  } catch { return null }
+}
+
+export async function savePaymentPin(userId: string, pin: string) {
+  return dbProxy({ table: 'user_settings', action: 'upsert', payload: { user_id: userId, payment_pin: pin } })
+}
+
 // ── Admin ─────────────────────────────────────────────────
 export async function getAllProfiles(): Promise<Profile[]> {
   try { return await dbProxy({ table: 'profiles', action: 'select', order: { col: 'created_at', asc: false } }) } catch { return [] }
