@@ -227,7 +227,11 @@ export default function WalletPage() {
     if (entered !== savedPin) { setPinError('Incorrect PIN'); setPin(['', '', '', '']); setTimeout(() => pinRefs[0].current?.focus(), 50); return }
     saveTxAndSuccess()
   }
-  const [balanceVisible, setBalanceVisible] = useState(true)
+  const [balanceVisible, setBalanceVisible] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const stored = localStorage.getItem('vestor_balance_visible')
+    return stored === null ? true : stored === 'true'
+  })
   const [refreshing, setRefreshing] = useState(false)
   const [rates, setRates] = useState<Record<string, number>>({ USD: 1, EUR: 0.92, BTC: 0.000015, ETH: 0.00045 })
 
@@ -318,7 +322,7 @@ export default function WalletPage() {
             <div className="flex items-center gap-2">
               {/* Eye toggle — the star of the show */}
               <button
-                onClick={() => setBalanceVisible(v => !v)}
+                onClick={() => setBalanceVisible(v => { localStorage.setItem('vestor_balance_visible', String(!v)); return !v })}
                 className="relative w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden group"
                 style={{ background: 'rgba(0,168,255,0.08)', border: '1px solid rgba(0,168,255,0.2)' }}
                 aria-label="Toggle balance visibility"
@@ -448,7 +452,11 @@ export default function WalletPage() {
                   <p className="text-white/40 text-xs">{new Date(tx.created_at).toLocaleString()}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-white text-sm font-semibold">${tx.amount}</p>
+                  <p className="text-white text-sm font-semibold overflow-hidden">
+                    <span key={`amt-${tx.id}-${balanceVisible}`} style={{ display: 'inline-block', animation: 'reveal-up 0.4s cubic-bezier(0.22,1,0.36,1)' }}>
+                      {balanceVisible ? `$${tx.amount}` : <span style={{ color: 'rgba(0,168,255,0.25)', letterSpacing: '0.15em' }}>████</span>}
+                    </span>
+                  </p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[tx.status]}`}>{tx.status}</span>
                 </div>
               </button>

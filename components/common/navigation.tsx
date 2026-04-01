@@ -7,6 +7,7 @@ import { Logo } from './logo'
 import { GlassButton } from '@/components/glass/glass-button'
 import { useAuth } from '@/context/auth-context'
 import { logOut } from '@/lib/auth'
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/supabase/db'
 import {
   LayoutDashboard, TrendingUp, BarChart2, ArrowLeftRight,
   Wallet, User, Bell, Settings, Menu, X,
@@ -130,8 +131,30 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
     : user?.email?.[0].toUpperCase() || '?'
 
   const unread = notifications.filter(n => !n.read).length
-  const markAllRead = () => setNotifications(n => n.map(x => ({ ...x, read: true })))
-  const markRead = (id: number) => setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x))
+
+  const markAllRead = async () => {
+    setNotifications(n => n.map(x => ({ ...x, read: true })))
+    if (user) await markAllNotificationsRead(user.uid)
+  }
+  const markRead = async (id: number) => {
+    setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x))
+    await markNotificationRead(id)
+  }
+
+  // Fetch real notifications from Supabase
+  useEffect(() => {
+    if (!user) return
+    getNotifications(user.uid).then(data => {
+      setNotifications(data.map(n => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        time: new Date(n.created_at).toLocaleString(),
+        read: n.read,
+      })))
+    })
+  }, [user])
 
   if (variant === 'dashboard') {
     return (
