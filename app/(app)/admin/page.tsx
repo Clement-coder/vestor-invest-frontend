@@ -33,6 +33,8 @@ export default function AdminPage() {
 
   // Transactions
   const [transactions, setTransactions] = useState<(Transaction & { profiles?: { email: string; full_name: string | null } })[]>([])
+  const [selectedTx, setSelectedTx] = useState<(Transaction & { profiles?: { email: string; full_name: string | null } }) | null>(null)
+  const [txStatusSaving, setTxStatusSaving] = useState(false)
 
   // Messages
   const [chatUsers, setChatUsers] = useState<{ user_id: string; profiles: { email: string; full_name: string | null; avatar_url: string | null } | null }[]>([])
@@ -109,8 +111,11 @@ export default function AdminPage() {
   }
 
   const handleTxStatus = async (txId: string, status: 'Completed' | 'Failed') => {
+    setTxStatusSaving(true)
     await adminUpdateTransactionStatus(txId, status)
     setTransactions(prev => prev.map(t => t.id === txId ? { ...t, status } : t))
+    setSelectedTx(prev => prev?.id === txId ? { ...prev, status } : prev)
+    setTxStatusSaving(false)
   }
 
   const sendReply = async () => {
@@ -198,7 +203,8 @@ export default function AdminPage() {
       {tab === 'transactions' && (
         <div className="space-y-2">
           {transactions.map(tx => (
-            <GlassCard key={tx.id} variant="nested" className="flex items-center justify-between gap-2">
+            <GlassCard key={tx.id} variant="nested" hover className="flex items-center justify-between gap-2 cursor-pointer"
+              onClick={() => setSelectedTx(tx)}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-white text-sm font-semibold truncate max-w-[140px] sm:max-w-none">{(tx as any).profiles?.email ?? tx.user_id.slice(0, 8)}</p>
@@ -208,12 +214,6 @@ export default function AdminPage() {
                 <p className="text-white/40 text-xs font-mono truncate">{tx.id} · {new Date(tx.created_at).toLocaleDateString()}</p>
               </div>
               <p className="text-white font-bold shrink-0 text-sm">${Number(tx.amount).toLocaleString()}</p>
-              {tx.status === 'Pending' && tx.type === 'Withdrawal' && (
-                <div className="flex gap-1.5 shrink-0">
-                  <button onClick={() => handleTxStatus(tx.id, 'Completed')} className="w-8 h-8 rounded-lg bg-[#39ff9e]/20 text-[#39ff9e] flex items-center justify-center hover:bg-[#39ff9e]/30 transition-all"><Check size={14} /></button>
-                  <button onClick={() => handleTxStatus(tx.id, 'Failed')} className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-all"><X size={14} /></button>
-                </div>
-              )}
             </GlassCard>
           ))}
           {transactions.length === 0 && <p className="text-white/30 text-center py-10">No transactions yet</p>}
@@ -331,6 +331,67 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Transaction Detail Modal */}
+      <GlassModal isOpen={!!selectedTx} onClose={() => setSelectedTx(null)} title="Transaction Details" neonBorder="cyan">
+        {selectedTx && (() => {
+          const u = users.find(u => u.id === selectedTx.user_id)
+          return (
+            <div className="space-y-4">
+              {/* User info */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="w-10 h-10 rounded-full bg-[#00a8ff]/20 flex items-center justify-center text-[#00a8ff] font-bold shrink-0 overflow-hidden">
+                  {u?.avatar_url
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                    : (u?.full_name || u?.email || '?')[0].toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold truncate">{u?.full_name || '—'}</p>
+                  <p className="text-white/50 text-xs truncate">{u?.email ?? selectedTx.user_id}</p>
+                </div>
+                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${statusColor[selectedTx.status]}`}>{selectedTx.status}</span>
+              </div>
+
+              {/* Transaction fields */}
+              {([
+                ['Transaction ID', selectedTx.id],
+                ['Type', selectedTx.type],
+                ['Method', selectedTx.method ?? '—'],
+                ['Amount', `$${Number(selectedTx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+                ['Date', new Date(selectedTx.created_at).toLocaleString()],
+                ...(selectedTx.beneficiary_name ? [['Beneficiary', selectedTx.beneficiary_name]] : []),
+                ...(selectedTx.bank_name ? [['Bank', selectedTx.bank_name]] : []),
+                ...(selectedTx.swift ? [['SWIFT', selectedTx.swift]] : []),
+                ...(selectedTx.iban ? [['IBAN', selectedTx.iban]] : []),
+                ...(selectedTx.routing ? [['Routing', selectedTx.routing]] : []),
+                ...(selectedTx.network ? [['Network', selectedTx.network]] : []),
+                ...(selectedTx.address ? [['Address', selectedTx.address]] : []),
+                ...(selectedTx.note ? [['Note', selectedTx.note]] : []),
+              ] as [string, string][]).map(([label, value]) => (
+                <div key={label} className="flex justify-between items-start gap-4 text-sm">
+                  <span className="text-white/40 shrink-0">{label}</span>
+                  <span className="text-white font-medium text-right break-all">{value}</span>
+                </div>
+              ))}
+
+              {/* Status actions */}
+              {selectedTx.status === 'Pending' && (
+                <div className="flex gap-3 pt-2 border-t border-white/10">
+                  <GlassButton variant="primary" className="flex-1 flex items-center justify-center gap-2"
+                    disabled={txStatusSaving} onClick={() => handleTxStatus(selectedTx.id, 'Completed')}>
+                    <Check size={14} /> {txStatusSaving ? 'Saving...' : 'Approve'}
+                  </GlassButton>
+                  <GlassButton variant="outline" className="flex-1 flex items-center justify-center gap-2 !border-red-500/30 !text-red-400 hover:!bg-red-500/10"
+                    disabled={txStatusSaving} onClick={() => handleTxStatus(selectedTx.id, 'Failed')}>
+                    <X size={14} /> Reject
+                  </GlassButton>
+                </div>
+              )}
+            </div>
+          )
+        })()}
+      </GlassModal>
 
       {/* Balance Update Modal */}
       <GlassModal isOpen={!!selectedUser} onClose={() => setSelectedUser(null)} title="Update User Balance" neonBorder="cyan">

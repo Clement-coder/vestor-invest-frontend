@@ -172,7 +172,6 @@ export default function PlansPage() {
                   variant="primary" className="w-full"
                   disabled={!canAfford}
                   onClick={() => { setSelectedPlan(plan); setModalOpen(true) }}
-                  style={canAfford ? { background: `linear-gradient(135deg, ${plan.color}cc, ${plan.color}88)` } : {}}
                 >
                   {canAfford ? `Invest $${plan.amount}` : 'Insufficient Balance'}
                 </GlassButton>
@@ -287,8 +286,7 @@ export default function PlansPage() {
               </p>
             </div>
 
-            <GlassButton variant="primary" className="w-full" onClick={handleInvest} disabled={loading}
-              style={{ background: `linear-gradient(135deg, ${selectedPlan.color}cc, ${selectedPlan.color}88)` }}>
+            <GlassButton variant="primary" className="w-full" onClick={handleInvest} disabled={loading}>
               {loading ? 'Processing...' : `Confirm — Invest $${selectedPlan.amount}`}
             </GlassButton>
           </div>
