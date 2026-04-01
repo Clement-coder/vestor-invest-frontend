@@ -192,10 +192,11 @@ export async function completeInvestment(id: string, profitLoss: number): Promis
 
 // ── Storage (chat images) ─────────────────────────────────
 export async function uploadChatImage(userId: string, file: File): Promise<string | null> {
-  const sb = createClient()
-  const path = `${userId}/${Date.now()}_${file.name}`
-  const { error } = await sb.storage.from('chat-images').upload(path, file)
-  if (error) return null
-  const { data } = sb.storage.from('chat-images').getPublicUrl(path)
-  return data.publicUrl
+  const form = new FormData()
+  form.append('file', file)
+  form.append('userId', userId)
+  const res = await fetch('/api/upload', { method: 'POST', body: form })
+  if (!res.ok) return null
+  const { url } = await res.json()
+  return url ?? null
 }
