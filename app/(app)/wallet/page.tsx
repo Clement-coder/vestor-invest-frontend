@@ -69,6 +69,62 @@ export default function WalletPage() {
   const [bankFields, setBankFields] = useState({ name: '', bankName: '', swift: '', iban: '', routing: '', purpose: 'personal' })
   const [confirmed, setConfirmed] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState<'form' | 'confirm' | 'pin' | 'pin-confirm' | 'success'>('form')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {}
+    const amt = parseFloat(withdrawAmount)
+
+    if (!withdrawAmount || isNaN(amt) || amt <= 0) {
+      errs.amount = 'Enter a valid amount'
+    } else if (withdrawTab === 'bank' && amt < 50) {
+      errs.amount = 'Minimum withdrawal is $50'
+    } else if (withdrawTab === 'crypto' && amt < 10) {
+      errs.amount = 'Minimum withdrawal is $10'
+    } else if (amt > balance) {
+      errs.amount = 'Amount exceeds your available balance'
+    }
+
+    if (withdrawTab === 'bank') {
+      if (!bankFields.name.trim()) errs.name = 'Beneficiary name is required'
+      else if (bankFields.name.trim().split(/\s+/).length < 2) errs.name = 'Enter full name (first and last)'
+
+      if (!bankFields.bankName.trim()) errs.bankName = 'Bank name is required'
+
+      if (!bankFields.swift.trim()) {
+        errs.swift = 'SWIFT/BIC is required'
+      } else if (!/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(bankFields.swift.trim())) {
+        errs.swift = 'Invalid SWIFT/BIC format (e.g. CHASUS33)'
+      }
+
+      if (!bankFields.iban.trim()) {
+        errs.iban = 'IBAN / Account number is required'
+      } else if (bankFields.iban.trim().length < 8) {
+        errs.iban = 'IBAN / Account number is too short'
+      }
+
+      if (bankFields.routing.trim() && !/^\d{6,9}$/.test(bankFields.routing.trim())) {
+        errs.routing = 'Routing/Sort code must be 6–9 digits'
+      }
+    } else {
+      if (!withdrawAddress.trim()) {
+        errs.address = 'Wallet address is required'
+      } else if (withdrawAddress.trim().length < 20) {
+        errs.address = 'Wallet address looks too short'
+      } else if (withdrawNetwork === 'btc' && !/^(1|3|bc1)[a-zA-HJ-NP-Z0-9]{25,62}$/.test(withdrawAddress.trim())) {
+        errs.address = 'Invalid Bitcoin address'
+      } else if (['erc20', 'bep20', 'matic'].includes(withdrawNetwork) && !/^0x[a-fA-F0-9]{40}$/.test(withdrawAddress.trim())) {
+        errs.address = 'Invalid EVM address (must start with 0x, 42 chars)'
+      } else if (withdrawNetwork === 'trc20' && !/^T[a-zA-Z0-9]{33}$/.test(withdrawAddress.trim())) {
+        errs.address = 'Invalid TRC-20 address (must start with T)'
+      }
+    }
+
+    if (!confirmed) errs.confirmed = 'You must confirm the details before proceeding'
+
+    setFieldErrors(errs)
+    return Object.keys(errs).length === 0
+  }
   // persist PIN — load from DB, fall back to localStorage
   const [savedPin, setSavedPin] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
@@ -103,6 +159,7 @@ export default function WalletPage() {
   const resetWithdraw = () => {
     setWithdrawStep('form'); setConfirmed(false)
     setPin(['', '', '', '']); setPinConfirm(['', '', '', '']); setPinError('')
+    setFieldErrors({})
   }
 
   const handlePinInput = (i: number, val: string, refs: React.RefObject<HTMLInputElement | null>[], setter: React.Dispatch<React.SetStateAction<string[]>>, onComplete?: (full: string) => void) => {
@@ -361,7 +418,7 @@ export default function WalletPage() {
           <>
             <div className="flex gap-2 mb-5 p-1 rounded-xl bg-white/[0.05] border border-white/10">
               {(['bank', 'crypto'] as const).map(tab => (
-                <button key={tab} onClick={() => setWithdrawTab(tab)}
+                <button key={tab} onClick={() => { setWithdrawTab(tab); setFieldErrors({}) }}
                   className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
                   style={withdrawTab === tab ? { background: 'var(--primary)', color: 'var(--background)' } : { color: 'rgba(255,255,255,0.5)' }}>
                   {tab === 'bank' ? '🏦 Bank Wire' : '🔗 Crypto Wallet'}
@@ -373,30 +430,35 @@ export default function WalletPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Amount (USD) <span className="text-red-400">*</span></label>
-                  <GlassInput type="number" placeholder="0.00" value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
-                  <p className="text-white/30 text-xs mt-1">Available: ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} · Min: $50</p>
+                  <GlassInput type="number" placeholder="0.00" value={withdrawAmount} onChange={e => { setWithdrawAmount(e.target.value); setFieldErrors(p => ({ ...p, amount: '' })) }} />
+                  {fieldErrors.amount ? <p className="text-red-400 text-xs mt-1">{fieldErrors.amount}</p> : <p className="text-white/30 text-xs mt-1">Available: ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} · Min: $50</p>}
                 </div>
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Beneficiary Full Name <span className="text-red-400">*</span></label>
-                  <GlassInput placeholder="As it appears on your bank account" value={bankFields.name} onChange={e => setBankFields(p => ({ ...p, name: e.target.value }))} />
+                  <GlassInput placeholder="As it appears on your bank account" value={bankFields.name} onChange={e => { setBankFields(p => ({ ...p, name: e.target.value })); setFieldErrors(p => ({ ...p, name: '' })) }} />
+                  {fieldErrors.name && <p className="text-red-400 text-xs mt-1">{fieldErrors.name}</p>}
                 </div>
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Bank Name <span className="text-red-400">*</span></label>
-                  <GlassInput placeholder="e.g. Chase, Barclays, Deutsche Bank" value={bankFields.bankName} onChange={e => setBankFields(p => ({ ...p, bankName: e.target.value }))} />
+                  <GlassInput placeholder="e.g. Chase, Barclays, Deutsche Bank" value={bankFields.bankName} onChange={e => { setBankFields(p => ({ ...p, bankName: e.target.value })); setFieldErrors(p => ({ ...p, bankName: '' })) }} />
+                  {fieldErrors.bankName && <p className="text-red-400 text-xs mt-1">{fieldErrors.bankName}</p>}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-white/50 mb-1.5">SWIFT / BIC <span className="text-red-400">*</span></label>
-                    <GlassInput placeholder="e.g. CHASUS33" value={bankFields.swift} onChange={e => setBankFields(p => ({ ...p, swift: e.target.value.toUpperCase() }))} />
+                    <GlassInput placeholder="e.g. CHASUS33" value={bankFields.swift} onChange={e => { setBankFields(p => ({ ...p, swift: e.target.value.toUpperCase() })); setFieldErrors(p => ({ ...p, swift: '' })) }} />
+                    {fieldErrors.swift && <p className="text-red-400 text-xs mt-1">{fieldErrors.swift}</p>}
                   </div>
                   <div>
                     <label className="block text-xs text-white/50 mb-1.5">IBAN / Account No. <span className="text-red-400">*</span></label>
-                    <GlassInput placeholder="e.g. GB29NWBK..." value={bankFields.iban} onChange={e => setBankFields(p => ({ ...p, iban: e.target.value }))} />
+                    <GlassInput placeholder="e.g. GB29NWBK..." value={bankFields.iban} onChange={e => { setBankFields(p => ({ ...p, iban: e.target.value })); setFieldErrors(p => ({ ...p, iban: '' })) }} />
+                    {fieldErrors.iban && <p className="text-red-400 text-xs mt-1">{fieldErrors.iban}</p>}
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Routing / Sort Code <span className="text-white/30 font-normal">(optional)</span></label>
-                  <GlassInput placeholder="US: 9-digit · UK: 6-digit" value={bankFields.routing} onChange={e => setBankFields(p => ({ ...p, routing: e.target.value }))} />
+                  <GlassInput placeholder="US: 9-digit · UK: 6-digit" value={bankFields.routing} onChange={e => { setBankFields(p => ({ ...p, routing: e.target.value })); setFieldErrors(p => ({ ...p, routing: '' })) }} />
+                  {fieldErrors.routing && <p className="text-red-400 text-xs mt-1">{fieldErrors.routing}</p>}
                 </div>
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Transfer Purpose <span className="text-white/30 font-normal">(optional)</span></label>
@@ -414,12 +476,12 @@ export default function WalletPage() {
                 </div>
                 {/* Confirm checkbox */}
                 <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[var(--primary)] shrink-0" />
+                  <input type="checkbox" checked={confirmed} onChange={e => { setConfirmed(e.target.checked); setFieldErrors(p => ({ ...p, confirmed: '' })) }} className="mt-0.5 w-4 h-4 accent-[var(--primary)] shrink-0" />
                   <span className="text-white/60 text-xs leading-relaxed">I confirm all the details above are correct. I understand that incorrect bank details may result in lost funds.</span>
                 </label>
+                {fieldErrors.confirmed && <p className="text-red-400 text-xs -mt-1">{fieldErrors.confirmed}</p>}
                 <GlassButton variant="primary" className="w-full flex items-center justify-center gap-2"
-                  disabled={!confirmed || !withdrawAmount || !bankFields.name || !bankFields.bankName || !bankFields.swift || !bankFields.iban}
-                  onClick={() => setWithdrawStep('confirm')}>
+                  onClick={() => { if (validate()) setWithdrawStep('confirm') }}>
                   <ArrowUpFromLine size={16} /> Review Withdrawal
                 </GlassButton>
               </div>
@@ -427,10 +489,10 @@ export default function WalletPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Amount (USD) <span className="text-red-400">*</span></label>
-                  <GlassInput type="number" placeholder="0.00" value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
-                  <p className="text-white/30 text-xs mt-1">Available: ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} · Min: $10</p>
+                  <GlassInput type="number" placeholder="0.00" value={withdrawAmount} onChange={e => { setWithdrawAmount(e.target.value); setFieldErrors(p => ({ ...p, amount: '' })) }} />
+                  {fieldErrors.amount ? <p className="text-red-400 text-xs mt-1">{fieldErrors.amount}</p> : <p className="text-white/30 text-xs mt-1">Available: ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} · Min: $10</p>}
                 </div>
-                <GlassSelect label="Network *" value={withdrawNetwork} onChange={setWithdrawNetwork} options={[
+                <GlassSelect label="Network *" value={withdrawNetwork} onChange={v => { setWithdrawNetwork(v); setFieldErrors(p => ({ ...p, address: '' })) }} options={[
                   { value: 'erc20', label: 'Ethereum (ERC-20)' },
                   { value: 'btc', label: 'Bitcoin (BTC)' },
                   { value: 'bep20', label: 'BNB Smart Chain (BEP-20)' },
@@ -439,8 +501,8 @@ export default function WalletPage() {
                 ]} />
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Wallet Address <span className="text-red-400">*</span></label>
-                  <GlassInput placeholder="Paste recipient wallet address" value={withdrawAddress} onChange={e => setWithdrawAddress(e.target.value)} />
-                  <p className="text-yellow-400/70 text-xs mt-1">⚠ Double-check the address. Crypto transfers are irreversible.</p>
+                  <GlassInput placeholder="Paste recipient wallet address" value={withdrawAddress} onChange={e => { setWithdrawAddress(e.target.value); setFieldErrors(p => ({ ...p, address: '' })) }} />
+                  {fieldErrors.address ? <p className="text-red-400 text-xs mt-1">{fieldErrors.address}</p> : <p className="text-yellow-400/70 text-xs mt-1">⚠ Double-check the address. Crypto transfers are irreversible.</p>}
                 </div>
                 <div className="rounded-lg bg-white/[0.04] border border-white/10 p-3 space-y-1.5 text-xs">
                   <div className="flex justify-between"><span className="text-white/50">Processing time</span><span className="text-white">10–30 minutes</span></div>
@@ -448,12 +510,12 @@ export default function WalletPage() {
                   <div className="flex justify-between"><span className="text-white/50">Confirmations</span><span className="text-white">3 blocks</span></div>
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[var(--primary)] shrink-0" />
+                  <input type="checkbox" checked={confirmed} onChange={e => { setConfirmed(e.target.checked); setFieldErrors(p => ({ ...p, confirmed: '' })) }} className="mt-0.5 w-4 h-4 accent-[var(--primary)] shrink-0" />
                   <span className="text-white/60 text-xs leading-relaxed">I confirm the wallet address and amount are correct. I understand crypto transactions cannot be reversed.</span>
                 </label>
+                {fieldErrors.confirmed && <p className="text-red-400 text-xs -mt-1">{fieldErrors.confirmed}</p>}
                 <GlassButton variant="primary" className="w-full flex items-center justify-center gap-2"
-                  disabled={!confirmed || !withdrawAmount || !withdrawAddress}
-                  onClick={() => setWithdrawStep('confirm')}>
+                  onClick={() => { if (validate()) setWithdrawStep('confirm') }}>
                   <ArrowUpFromLine size={16} /> Review Withdrawal
                 </GlassButton>
               </div>
