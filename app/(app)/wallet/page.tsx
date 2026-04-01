@@ -19,10 +19,10 @@ import { useState, useRef, useEffect } from 'react'
 import React from 'react'
 
 const TOP4 = [
-  { code: 'USD', name: 'US Dollar', symbol: '$', rate: 1, logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/us.svg', round: false },
-  { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.92, logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/eu.svg', round: false },
-  { code: 'BTC', name: 'Bitcoin', symbol: '₿', rate: 0.000021, logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', round: true },
-  { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', rate: 0.0052, logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', round: true },
+  { code: 'USD', name: 'US Dollar', symbol: '$', logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/us.svg', round: false },
+  { code: 'EUR', name: 'Euro', symbol: '€', logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/eu.svg', round: false },
+  { code: 'BTC', name: 'Bitcoin', symbol: '₿', logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', round: true },
+  { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', round: true },
 ]
 
 // Map Transaction to TxRecord shape for receipt
@@ -160,6 +160,25 @@ export default function WalletPage() {
   }
   const [balanceVisible, setBalanceVisible] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [rates, setRates] = useState<Record<string, number>>({ USD: 1, EUR: 0.92, BTC: 0.000015, ETH: 0.00045 })
+
+  // Fetch live rates from CoinGecko (free, no key needed)
+  useEffect(() => {
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,eur')
+      .then(r => r.json())
+      .then(data => {
+        const btcUsd = data?.bitcoin?.usd ?? 0
+        const ethUsd = data?.ethereum?.usd ?? 0
+        const eurUsd = data?.bitcoin?.eur && btcUsd ? (data.bitcoin.eur / btcUsd) : 0.92
+        setRates({
+          USD: 1,
+          EUR: eurUsd || 0.92,
+          BTC: btcUsd ? 1 / btcUsd : 0.000015,
+          ETH: ethUsd ? 1 / ethUsd : 0.00045,
+        })
+      })
+      .catch(() => {}) // keep defaults on error
+  }, [])
 
   const handleRefresh = () => {
     setRefreshing(true)
@@ -199,7 +218,7 @@ export default function WalletPage() {
             </div>
           </div>
 
-          <p className="text-5xl font-bold text-white mb-1">
+      <p className="text-4xl sm:text-5xl font-bold text-white mb-1">
             {balanceVisible ? `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
           </p>
           <p className="text-white/40 text-sm mb-6">{balance === 0 ? 'No activity yet — make a deposit to get started' : 'Available balance'}</p>
@@ -216,17 +235,19 @@ export default function WalletPage() {
       {/* Balance in Top 4 Currencies */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {TOP4.map((cur) => {
-          const converted = balance * cur.rate
+          const rate = rates[cur.code] ?? 1
+          const converted = balance * rate
           const formatted = cur.code === 'BTC' || cur.code === 'ETH'
             ? converted.toFixed(6)
             : converted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           return (
             <GlassCard key={cur.code} variant="nested" hover={false} className="flex flex-col gap-2 py-4 px-4">
               <div className="flex items-center gap-2">
-                <img src={cur.logo} alt={cur.code} width={28} height={28} className={cur.round ? 'rounded-full' : 'rounded-sm object-cover'} style={{ width: 28, height: 28 }} />
-                <p className="text-white/50 text-xs">{cur.name}</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cur.logo} alt={cur.code} width={22} height={22} className={cur.round ? 'rounded-full' : 'rounded-sm object-cover'} style={{ width: 22, height: 22 }} />
+                <p className="text-white/50 text-xs truncate">{cur.name}</p>
               </div>
-              <p className="text-white font-bold text-lg">
+              <p className="text-white font-bold text-base sm:text-lg truncate">
                 {balanceVisible ? `${cur.symbol}${formatted}` : '••••'}
               </p>
               <p className="text-white/30 text-xs">{cur.code}</p>
@@ -341,7 +362,7 @@ export default function WalletPage() {
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Amount (USD) <span className="text-red-400">*</span></label>
                   <GlassInput type="number" placeholder="0.00" value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
-                  <p className="text-white/30 text-xs mt-1">Available: $0.00 · Min: $50</p>
+                  <p className="text-white/30 text-xs mt-1">Available: ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} · Min: $50</p>
                 </div>
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Beneficiary Full Name <span className="text-red-400">*</span></label>
@@ -351,7 +372,7 @@ export default function WalletPage() {
                   <label className="block text-xs text-white/50 mb-1.5">Bank Name <span className="text-red-400">*</span></label>
                   <GlassInput placeholder="e.g. Chase, Barclays, Deutsche Bank" value={bankFields.bankName} onChange={e => setBankFields(p => ({ ...p, bankName: e.target.value }))} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-white/50 mb-1.5">SWIFT / BIC <span className="text-red-400">*</span></label>
                     <GlassInput placeholder="e.g. CHASUS33" value={bankFields.swift} onChange={e => setBankFields(p => ({ ...p, swift: e.target.value.toUpperCase() }))} />
@@ -395,7 +416,7 @@ export default function WalletPage() {
                 <div>
                   <label className="block text-xs text-white/50 mb-1.5">Amount (USD) <span className="text-red-400">*</span></label>
                   <GlassInput type="number" placeholder="0.00" value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
-                  <p className="text-white/30 text-xs mt-1">Available: $0.00 · Min: $10</p>
+                  <p className="text-white/30 text-xs mt-1">Available: ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} · Min: $10</p>
                 </div>
                 <GlassSelect label="Network *" value={withdrawNetwork} onChange={setWithdrawNetwork} options={[
                   { value: 'erc20', label: 'Ethereum (ERC-20)' },
