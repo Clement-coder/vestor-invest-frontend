@@ -10,7 +10,7 @@ import { logOut } from '@/lib/auth'
 import {
   LayoutDashboard, TrendingUp, BarChart2, ArrowLeftRight,
   Wallet, User, Bell, Settings, Menu, X,
-  CheckCheck, Gift, AlertTriangle, Info, LogOut,
+  CheckCheck, Gift, AlertTriangle, Info, LogOut, ShieldCheck,
 } from 'lucide-react'
 import React, { useState, useRef, useEffect } from 'react'
 
@@ -115,7 +115,7 @@ function SlidePanel({
 export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState(initialNotifications)
@@ -202,6 +202,20 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
                 {label}
               </Link>
             ))}
+            {profile?.role === 'admin' && (
+              <Link
+                href="/admin"
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border',
+                  pathname === '/admin'
+                    ? 'bg-[#00a8ff]/20 text-[#00a8ff] border-[#00a8ff]/30'
+                    : 'text-[#00a8ff]/70 hover:text-[#00a8ff] hover:bg-[#00a8ff]/10 border-[#00a8ff]/20'
+                )}
+              >
+                <ShieldCheck size={17} /> Admin Panel
+              </Link>
+            )}
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all mt-2"
