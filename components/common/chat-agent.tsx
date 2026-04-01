@@ -30,6 +30,7 @@ export default function ChatAgent() {
   const [input, setInput] = useState('')
   const [listening, setListening] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([initialMessage])
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -243,7 +244,7 @@ export default function ChatAgent() {
                   <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     {msg.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={msg.image_url} alt="shared" style={{ ...r('10px'), maxWidth: 200, maxHeight: 200, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                      <img src={msg.image_url} alt="shared" onClick={() => setLightbox(msg.image_url)} style={{ ...r('10px'), maxWidth: 200, maxHeight: 200, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', cursor: 'zoom-in' }} />
                     ) : (
                       <div
                         style={msg.role === 'agent'
@@ -284,6 +285,17 @@ export default function ChatAgent() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setLightbox(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="expanded" className="max-w-[90vw] max-h-[80vh] rounded-2xl object-contain shadow-2xl" onClick={e => e.stopPropagation()} />
+          <button onClick={() => setLightbox(null)} style={{ borderRadius: '50%' }} className="absolute top-4 right-4 w-9 h-9 bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition-all">
+            <X size={16} />
+          </button>
         </div>
       )}
     </>

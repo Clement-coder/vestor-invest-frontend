@@ -43,6 +43,7 @@ export default function AdminPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [allMsgCounts, setAllMsgCounts] = useState<Record<string, number>>({})
+  const [lightbox, setLightbox] = useState<string | null>(null)
 
   // Guard: admin only
   useEffect(() => {
@@ -285,7 +286,7 @@ export default function AdminPage() {
                         <div className={`max-w-[75%] flex flex-col gap-1 ${msg.role === 'agent' ? 'items-end' : 'items-start'}`}>
                           {msg.image_url
                             // eslint-disable-next-line @next/next/no-img-element
-                            ? <img src={msg.image_url} alt="img" style={{ borderRadius: 8, maxWidth: 160, maxHeight: 160, objectFit: 'cover' }} />
+                            ? <img src={msg.image_url} alt="img" onClick={() => setLightbox(msg.image_url)} style={{ borderRadius: 8, maxWidth: 160, maxHeight: 160, objectFit: 'cover', cursor: 'zoom-in' }} />
                             : <div style={msg.role === 'agent'
                                 ? { borderRadius: '12px 4px 12px 12px', background: 'var(--primary)' }
                                 : { borderRadius: '4px 12px 12px 4px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
@@ -352,6 +353,17 @@ export default function AdminPage() {
           </div>
         )}
       </GlassModal>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setLightbox(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="expanded" className="max-w-[90vw] max-h-[80vh] rounded-2xl object-contain shadow-2xl" onClick={e => e.stopPropagation()} />
+          <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition-all">
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
