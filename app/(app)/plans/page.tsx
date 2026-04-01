@@ -36,7 +36,7 @@ function useCountdown(endTime: string) {
 
 function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () => void }) {
   const { remaining, label } = useCountdown(inv.end_time)
-  const total = 5 * 60 * 60 * 1000
+  const total = Math.max(1, new Date(inv.end_time).getTime() - new Date(inv.start_time).getTime())
   const progress = Math.max(0, Math.min(100, ((total - remaining) / total) * 100))
 
   useEffect(() => {
