@@ -5,14 +5,13 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { getAllProfiles, adminUpdateBalance, adminUpdateTransactionStatus, getAllTransactions, getChatUsers, getChatMessages, insertChatMessage, uploadChatImage } from '@/lib/supabase/db'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { useAuth } from '@/context/auth-context'
 import type { Profile, Transaction, ChatMessage } from '@/lib/supabase/db'
 import { Users, MessageSquare, ArrowLeftRight, DollarSign, Check, X, Send, Bot, ImagePlus } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import React from 'react'
-
-const r = (radius: string) => ({ borderRadius: radius })
 
 const statusColor: Record<string, string> = {
   Completed: 'text-[#39ff9e] bg-[#39ff9e]/10',
@@ -56,24 +55,22 @@ export default function AdminPage() {
     if (profile && profile.role !== 'admin') router.replace('/dashboard')
   }, [profile, router])
 
+  // Initial data loads
   useEffect(() => { getAllProfiles().then(setUsers) }, [])
   useEffect(() => { if (tab === 'transactions') getAllTransactions().then(setTransactions) }, [tab])
   useEffect(() => {
-    if (tab === 'messages') {
-      getChatUsers().then((rawUsers: any[]) => {
-        // enrich with profile data from already-loaded users list
-        getAllProfiles().then(profiles => {
-          const enriched = rawUsers.map((cu: any) => {
-            const p = profiles.find(u => u.id === cu.user_id)
-            return { user_id: cu.user_id, profiles: p ? { email: p.email, full_name: p.full_name, avatar_url: p.avatar_url } : null }
-          })
-          setChatUsers(enriched)
-        })
+    if (tab !== 'messages') return
+    getChatUsers().then((rawUsers: { user_id: string }[]) => {
+      getAllProfiles().then(profiles => {
+        setChatUsers(rawUsers.map(cu => {
+          const p = profiles.find(u => u.id === cu.user_id)
+          return { user_id: cu.user_id, profiles: p ? { email: p.email, full_name: p.full_name, avatar_url: p.avatar_url } : null }
+        }))
       })
-    }
+    })
   }, [tab])
 
-  // Poll selected chat every 5s
+  // Load selected chat messages
   useEffect(() => {
     if (!selectedChatUser) return
     getChatMessages(selectedChatUser).then(msgs => {
@@ -85,50 +82,75 @@ export default function AdminPage() {
         return next
       })
     })
-    const id = setInterval(() => {
-      getChatMessages(selectedChatUser).then(msgs => {
-        setChatMsgs(msgs)
-        const count = msgs.filter(m => m.role === 'user').length
-        setSeenCounts(prev => {
-          const next = { ...prev, [selectedChatUser]: count }
-          localStorage.setItem('admin_seen_counts', JSON.stringify(next))
-          return next
-        })
-      })
-    }, 5000)
-    return () => clearInterval(id)
   }, [selectedChatUser])
 
-  // Poll all users for new message badge every 8s
+  // Realtime: new chat messages (replaces all polling)
   useEffect(() => {
-    if (tab !== 'messages' || chatUsers.length === 0) return
-    const poll = () => chatUsers.forEach(cu =>
-      getChatMessages(cu.user_id).then(msgs =>
-        setAllMsgCounts(prev => ({ ...prev, [cu.user_id]: msgs.filter(m => m.role === 'user').length }))
-      )
+    return subscribeToTable<ChatMessage>(
+      'chat_messages',
+      'INSERT',
+      (row) => {
+        // Update selected chat window
+        if (row.user_id === selectedChatUser) {
+          setChatMsgs(prev => prev.some(m => m.id === row.id) ? prev : [...prev, row])
+        }
+        // Update unread badge counts for all users
+        if (row.role === 'user') {
+          setAllMsgCounts(prev => ({ ...prev, [row.user_id]: (prev[row.user_id] ?? 0) + 1 }))
+          // Add user to chat list if not already there
+          setChatUsers(prev => {
+            if (prev.some(cu => cu.user_id === row.user_id)) return prev
+            return [...prev, { user_id: row.user_id, profiles: null }]
+          })
+        }
+      },
     )
-    poll()
-    const id = setInterval(poll, 8000)
-    return () => clearInterval(id)
-  }, [tab, chatUsers])
+  }, [selectedChatUser])
+
+  // Realtime: new transactions
+  useEffect(() => {
+    return subscribeToTable<Transaction>(
+      'transactions',
+      ['INSERT', 'UPDATE'],
+      (row, event) => {
+        setTransactions(prev => {
+          if (event === 'INSERT') return [row, ...prev]
+          return prev.map(t => t.id === row.id ? { ...t, ...row } : t)
+        })
+        setSelectedTx(prev => prev?.id === row.id ? { ...prev, ...row } : prev)
+      },
+    )
+  }, [])
+
+  // Realtime: profile balance updates
+  useEffect(() => {
+    return subscribeToTable<Profile>(
+      'profiles',
+      'UPDATE',
+      (row) => {
+        setUsers(prev => prev.map(u => u.id === row.id ? { ...u, ...row } : u))
+        setSelectedUser(prev => prev?.id === row.id ? { ...prev, ...row } : prev)
+      },
+    )
+  }, [])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMsgs])
 
   const handleUpdateBalance = async () => {
     if (!selectedUser || !newBalance) return
+    const newBal = parseFloat(newBalance)
     setBalanceSaving(true)
-    await adminUpdateBalance(selectedUser.id, parseFloat(newBalance))
-    setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, balance: parseFloat(newBalance) } : u))
-    setSelectedUser(prev => prev ? { ...prev, balance: parseFloat(newBalance) } : null)
+    await adminUpdateBalance(selectedUser.id, newBal)
+    // Realtime will update users/selectedUser automatically
     setBalanceSaving(false)
     setNewBalance('')
+    setSelectedUser(null)
   }
 
   const handleTxStatus = async (txId: string, status: 'Completed' | 'Failed') => {
     setTxStatusSaving(true)
     await adminUpdateTransactionStatus(txId, status)
-    setTransactions(prev => prev.map(t => t.id === txId ? { ...t, status } : t))
-    setSelectedTx(prev => prev?.id === txId ? { ...prev, status } : prev)
+    // Realtime UPDATE subscription will sync transactions + selectedTx
     setTxStatusSaving(false)
   }
 
@@ -139,6 +161,7 @@ export default function AdminPage() {
     setChatMsgs(prev => [...prev, optimistic])
     setReplyText('')
     await insertChatMessage(msg)
+    // Realtime will push the real row back; dedup logic in subscription handles it
   }
 
   const sendImage = async (file: File) => {

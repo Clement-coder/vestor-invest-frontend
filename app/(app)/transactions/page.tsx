@@ -6,8 +6,10 @@ import { GlassSelect } from '@/components/glass/glass-select'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { TransactionReceipt } from '@/components/common/transaction-receipt'
 import { getTransactions } from '@/lib/supabase/db'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { useAuth } from '@/context/auth-context'
 import type { Transaction } from '@/lib/supabase/db'
+import type { TxRecord } from '@/lib/transactions-store'
 import { TrendingUp, TrendingDown, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft, Landmark } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import React from 'react'
@@ -47,8 +49,8 @@ function txLabel(tx: Transaction) {
 function toTxRecord(tx: Transaction) {
   return {
     id: tx.id,
-    type: tx.type as 'Withdrawal',
-    method: (tx.method ?? 'bank') as 'bank' | 'crypto',
+    type: tx.type as TxRecord['type'],
+    method: (tx.method ?? 'bank') as 'bank' | 'crypto' | 'admin',
     amount: tx.amount.toString(),
     status: tx.status as 'Pending' | 'Completed' | 'Failed',
     date: new Date(tx.created_at).toLocaleString(),
@@ -73,6 +75,17 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (!user) return
     getTransactions(user.uid).then(setTxs)
+    return subscribeToTable<Transaction>(
+      'transactions',
+      ['INSERT', 'UPDATE'],
+      (row, event) => {
+        setTxs(prev => {
+          if (event === 'INSERT') return [row, ...prev]
+          return prev.map(t => t.id === row.id ? { ...t, ...row } : t)
+        })
+      },
+      { col: 'user_id', val: user.uid },
+    )
   }, [user])
 
   const filtered = txs.filter(tx => {

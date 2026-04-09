@@ -7,8 +7,10 @@ import { GlassModal } from '@/components/glass/glass-modal'
 import { GlassSelect } from '@/components/glass/glass-select'
 import { TransactionReceipt } from '@/components/common/transaction-receipt'
 import { insertTransaction, getTransactions, getPaymentPin, savePaymentPin } from '@/lib/supabase/db'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { useAuth } from '@/context/auth-context'
 import type { Transaction } from '@/lib/supabase/db'
+import type { TxRecord } from '@/lib/transactions-store'
 import Link from 'next/link'
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, MessageCircle,
@@ -26,11 +28,11 @@ const TOP4 = [
 ]
 
 // Map Transaction to TxRecord shape for receipt
-function toTxRecord(tx: Transaction) {
+function toTxRecord(tx: Transaction): TxRecord {
   return {
     id: tx.id,
-    type: tx.type as 'Withdrawal',
-    method: (tx.method ?? 'bank') as 'bank' | 'crypto',
+    type: tx.type as TxRecord['type'],
+    method: (tx.method ?? 'bank') as 'bank' | 'crypto' | 'admin',
     amount: tx.amount.toString(),
     status: tx.status as 'Pending' | 'Completed' | 'Failed',
     date: new Date(tx.created_at).toLocaleString(),
@@ -48,13 +50,6 @@ const statusColor: Record<string, string> = {
   Completed: 'text-[#39ff9e] bg-[#39ff9e]/10',
   Pending: 'text-yellow-400 bg-yellow-400/10',
   Failed: 'text-red-400 bg-red-400/10',
-}
-
-const RECENT_TXS: never[] = []
-const txIcon = (type: string, status: string) => {
-  if (status === 'Failed') return null
-  if (type === 'Withdrawal') return null
-  return null
 }
 
 export default function WalletPage() {
@@ -148,10 +143,21 @@ export default function WalletPage() {
   const [recentTxs, setRecentTxs] = useState<Transaction[]>([])
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
 
-  // Load transactions from Supabase
+  // Load transactions from Supabase + Realtime sync
   useEffect(() => {
     if (!user) return
     getTransactions(user.uid).then(setRecentTxs)
+    return subscribeToTable<Transaction>(
+      'transactions',
+      ['INSERT', 'UPDATE'],
+      (row, event) => {
+        setRecentTxs(prev => {
+          if (event === 'INSERT') return [row, ...prev]
+          return prev.map(t => t.id === row.id ? { ...t, ...row } : t)
+        })
+      },
+      { col: 'user_id', val: user.uid },
+    )
   }, [user])
   const pinRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
   const pinConfirmRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]

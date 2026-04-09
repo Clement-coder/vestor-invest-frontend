@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send, Bot, User, Mic, MicOff, ImagePlus } from 'lucide-react'
 import { getChatMessages, insertChatMessage, uploadChatImage } from '@/lib/supabase/db'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { useAuth } from '@/context/auth-context'
 import type { ChatMessage } from '@/lib/supabase/db'
 import React from 'react'
 
-const now = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+const r = (radius: string) => ({ borderRadius: radius })
 
 const initialMessage: ChatMessage = {
   id: 0,
@@ -17,8 +18,6 @@ const initialMessage: ChatMessage = {
   image_url: null,
   created_at: new Date().toISOString(),
 }
-
-const r = (radius: string) => ({ borderRadius: radius })
 
 export default function ChatAgent() {
   const { user } = useAuth()
@@ -33,67 +32,51 @@ export default function ChatAgent() {
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [unreadAgent, setUnreadAgent] = useState(0)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const prevAgentCount = useRef(0)
   const recognitionRef = useRef<any>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const openRef = useRef(open)
+  openRef.current = open
 
-  // Load messages from Supabase
+  // Load initial messages
   useEffect(() => {
     if (!user) return
     getChatMessages(user.uid).then(msgs => {
-      if (msgs.length > 0) {
-        setMessages(msgs)
-        prevAgentCount.current = msgs.filter(m => m.role === 'agent' && m.id !== 0).length
-      }
+      if (msgs.length > 0) setMessages(msgs)
     })
-    // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission()
     }
   }, [user])
 
-  // Poll even when chat is closed — for badge + notification
+  // Realtime subscription — replaces all polling intervals
   useEffect(() => {
-    if (!user || open) return
-    const id = setInterval(() => {
-      getChatMessages(user.uid).then(msgs => {
-        const agentCount = msgs.filter(m => m.role === 'agent' && m.id !== 0).length
-        if (agentCount > prevAgentCount.current && prevAgentCount.current > 0) {
-          setUnreadAgent(n => n + (agentCount - prevAgentCount.current))
+    if (!user) return
+    const unsub = subscribeToTable<ChatMessage>(
+      'chat_messages',
+      'INSERT',
+      (row) => {
+        // Deduplicate: ignore if we already have this id (optimistic insert)
+        setMessages(prev => {
+          if (prev.some(m => m.id === row.id)) return prev
+          return [...prev, row]
+        })
+        // Badge + notification for agent replies when chat is closed
+        if (row.role === 'agent' && row.id !== 0 && !openRef.current) {
+          setUnreadAgent(n => n + 1)
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Vestor Support', { body: 'You have a new message from your agent.', icon: '/VestorLog.png' })
+            new Notification('Vestor Support', {
+              body: 'You have a new message from your agent.',
+              icon: '/VestorLog.png',
+            })
           }
         }
-        prevAgentCount.current = agentCount
-        if (msgs.length > 0) setMessages(msgs)
-      })
-    }, 10000)
-    return () => clearInterval(id)
-  }, [user, open])
+      },
+      { col: 'user_id', val: user.uid },
+    )
+    return unsub
+  }, [user])
 
-  // Poll for new admin replies every 5 seconds when chat is open
-  useEffect(() => {
-    if (!user || !open) return
-    const id = setInterval(() => {
-      getChatMessages(user.uid).then(msgs => {
-        if (msgs.length > 0) {
-          const agentCount = msgs.filter(m => m.role === 'agent' && m.id !== 0).length
-          if (agentCount > prevAgentCount.current && prevAgentCount.current > 0) {
-            // New agent reply arrived
-            setUnreadAgent(n => n + (agentCount - prevAgentCount.current))
-            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-              new Notification('Vestor Support', { body: 'You have a new message from your agent.', icon: '/VestorLog.png' })
-            }
-          }
-          prevAgentCount.current = agentCount
-          setMessages(msgs)
-        }
-      })
-    }, 5000)
-    return () => clearInterval(id)
-  }, [user, open])
-
-  // ── draggable FAB ──
+  // Draggable FAB
   const [fabSide, setFabSide] = useState<'left' | 'right'>('right')
   const [fabY, setFabY] = useState(24)
   const fabDragging = useRef(false)
@@ -110,8 +93,7 @@ export default function ChatAgent() {
     if (!fabDragging.current) return
     const dy = fabStart.current.clientY - e.clientY
     if (Math.abs(dy) > 4 || Math.abs(e.clientX - fabStart.current.clientX) > 4) fabMoved.current = true
-    const newY = Math.max(16, Math.min(window.innerHeight - 72, fabStart.current.fabY + dy))
-    setFabY(newY)
+    setFabY(Math.max(16, Math.min(window.innerHeight - 72, fabStart.current.fabY + dy)))
   }
   const onFabPointerUp = (e: React.PointerEvent) => {
     if (!fabDragging.current) return
@@ -120,11 +102,10 @@ export default function ChatAgent() {
     if (!fabMoved.current) setOpen(o => !o)
   }
 
-  // open/close animation
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      setUnreadAgent(0) // clear badge when opened
+      setUnreadAgent(0)
       requestAnimationFrame(() => setVisible(true))
     } else {
       setVisible(false)
@@ -159,16 +140,16 @@ export default function ChatAgent() {
     setInput('')
     await insertChatMessage(msg)
 
-    // Only send auto-reply on the very first user message
-    const hasRealMessages = messages.filter(m => m.id !== 0 && m.role === 'user').length === 0
-    if (hasRealMessages) {
+    // Auto-reply only on the very first user message
+    const isFirst = messages.filter(m => m.id !== 0 && m.role === 'user').length === 0
+    if (isFirst) {
       setTimeout(async () => {
         const agentMsg: Omit<ChatMessage, 'id' | 'created_at'> = {
           user_id: user.uid, role: 'agent', image_url: null,
-          text: "Thanks for reaching out! Our support team has been notified and will reply to you shortly.",
+          text: 'Thanks for reaching out! Our support team has been notified and will reply to you shortly.',
         }
-        setMessages(prev => [...prev, { ...agentMsg, id: Date.now() + 1, created_at: new Date().toISOString() }])
         await insertChatMessage(agentMsg)
+        // Realtime will push it back — no need to setMessages here
       }, 800)
     }
   }
@@ -182,12 +163,10 @@ export default function ChatAgent() {
     setMessages(prev => [...prev, optimistic])
     await insertChatMessage(msg)
     setTimeout(async () => {
-      const agentMsg: Omit<ChatMessage, 'id' | 'created_at'> = {
+      await insertChatMessage({
         user_id: user.uid, role: 'agent', image_url: null,
         text: 'Thanks for sharing the image! Our team will review it and get back to you shortly.',
-      }
-      setMessages(prev => [...prev, { ...agentMsg, id: Date.now() + 1, created_at: new Date().toISOString() }])
-      await insertChatMessage(agentMsg)
+      })
     }, 800)
   }
 
@@ -309,7 +288,6 @@ export default function ChatAgent() {
 
             {/* Input */}
             <div className="flex items-center gap-2 px-3 py-3 border-t border-white/10 shrink-0">
-              {/* Hidden file input */}
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) sendImage(f); e.target.value = '' }} />
               <button onClick={() => imageInputRef.current?.click()} style={r('8px')} className="w-9 h-9 flex items-center justify-center bg-white/[0.07] border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all" title="Send image">
                 <ImagePlus size={15} />

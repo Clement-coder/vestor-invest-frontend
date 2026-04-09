@@ -8,6 +8,8 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { useAuth } from '@/context/auth-context'
 import { logOut } from '@/lib/auth'
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/supabase/db'
+import { subscribeToTable } from '@/lib/supabase/realtime'
+import type { Notification } from '@/lib/supabase/db'
 import {
   LayoutDashboard, TrendingUp, BarChart2, ArrowLeftRight,
   Wallet, User, Bell, Settings, Menu, X,
@@ -141,7 +143,7 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
     await markNotificationRead(id)
   }
 
-  // Fetch real notifications from Supabase
+  // Fetch real notifications from Supabase + Realtime sync
   useEffect(() => {
     if (!user) return
     getNotifications(user.uid).then(data => {
@@ -154,6 +156,21 @@ export function Navigation({ variant = 'landing', onAuthClick }: NavigationProps
         read: n.read,
       })))
     })
+    return subscribeToTable<Notification>(
+      'notifications',
+      'INSERT',
+      (row) => {
+        setNotifications(prev => [{
+          id: row.id,
+          type: row.type,
+          title: row.title,
+          message: row.message,
+          time: new Date(row.created_at).toLocaleString(),
+          read: row.read,
+        }, ...prev])
+      },
+      { col: 'user_id', val: user.uid },
+    )
   }, [user])
 
   if (variant === 'dashboard') {

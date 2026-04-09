@@ -6,44 +6,19 @@ import { useAuth } from '@/context/auth-context'
 import { getUserInvestments } from '@/lib/supabase/db'
 import type { Investment } from '@/lib/supabase/db'
 import { useState, useEffect } from 'react'
+import { useCountdown } from '@/hooks/use-countdown'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
 import { TrendingUp, TrendingDown, ArrowRightLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
-function useCountdown(endTime: string) {
-  const calc = () => {
-    const diff = new Date(endTime).getTime() - Date.now()
-    if (diff <= 0) return { label: 'Completed', pct: 100 }
-    const h = Math.floor(diff / 3600000)
-    const m = Math.floor((diff % 3600000) / 60000)
-    const s = Math.floor((diff % 60000) / 1000)
-    return { label: `${h}h ${m}m ${s}s`, pct: 0 }
-  }
-  const [state, setState] = useState(calc)
-  useEffect(() => {
-    const id = setInterval(() => setState(calc()), 1000)
-    return () => clearInterval(id)
-  }, [endTime])
-  return state
-}
-
 function ActiveInvestmentRow({ inv }: { inv: Investment }) {
   const start = new Date(inv.start_time).getTime()
   const end = new Date(inv.end_time).getTime()
-  const now = Date.now()
-  const total = end - start
-  const elapsed = Math.min(now - start, total)
-  const { label } = useCountdown(inv.end_time)
-  const [pct, setPct] = useState(total > 0 ? Math.min((elapsed / total) * 100, 100) : 0)
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      const e = Math.min(Date.now() - start, total)
-      setPct(total > 0 ? Math.min((e / total) * 100, 100) : 0)
-    }, 1000)
-    return () => clearInterval(id)
-  }, [start, total])
+  const total = Math.max(1, end - start)
+  const { remaining, label } = useCountdown(inv.end_time)
+  const pct = Math.min(((total - remaining) / total) * 100, 100)
 
   return (
     <GlassCard variant="nested" className="flex flex-col gap-3">
@@ -173,13 +148,30 @@ function PriceChart({ coinId, label, symbol, color }: { coinId: string; label: s
 }
 
 export default function DashboardPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const balance = profile?.balance ?? 0
   const [investments, setInvestments] = useState<Investment[]>([])
 
   useEffect(() => {
     if (user) getUserInvestments(user.uid).then(setInvestments)
   }, [user])
+
+  // Realtime: sync investment changes
+  useEffect(() => {
+    if (!user) return
+    return subscribeToTable<Investment>(
+      'investments',
+      ['INSERT', 'UPDATE'],
+      (row, event) => {
+        setInvestments(prev => {
+          if (event === 'INSERT') return [row, ...prev]
+          return prev.map(i => i.id === row.id ? { ...i, ...row } : i)
+        })
+        if (event === 'UPDATE' && row.status === 'completed') refreshProfile()
+      },
+      { col: 'user_id', val: user.uid },
+    )
+  }, [user, refreshProfile])
 
   const completed = investments.filter(i => i.status === 'completed')
   const active = investments.filter(i => i.status === 'active')

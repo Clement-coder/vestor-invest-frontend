@@ -23,31 +23,47 @@ export const metadata: Metadata = {
   authors: [{ name: 'Vestor Invest' }],
   creator: 'Vestor Invest',
   publisher: 'Vestor Invest',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Vestor Invest',
+  },
   icons: {
     icon: [
-      { url: '/VestorLog.png', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/VestorLog.png',
-    shortcut: '/VestorLog.png',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon-32x32.png',
   },
   openGraph: {
     title: 'Vestor Invest — Premium Crypto Investing Platform',
     description: 'Grow your wealth with AI-powered crypto investment plans and real-time analytics.',
     type: 'website',
     siteName: 'Vestor Invest',
-    images: [{ url: '/VestorLog.png', width: 512, height: 512, alt: 'Vestor Invest' }],
+    images: [{ url: '/icon-512x512.png', width: 512, height: 512, alt: 'Vestor Invest' }],
   },
   twitter: {
     card: 'summary',
     title: 'Vestor Invest — Premium Crypto Investing',
     description: 'AI-powered crypto investment plans with real-time analytics and bank-level security.',
-    images: ['/VestorLog.png'],
+    images: ['/icon-512x512.png'],
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={geist.className}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Vestor" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
@@ -56,6 +72,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Toaster position="top-right" richColors duration={3000} />
         </ThemeProvider>
         <Analytics />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))}`,
+          }}
+        />
       </body>
     </html>
   )

@@ -3,6 +3,7 @@
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/supabase/db'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { useAuth } from '@/context/auth-context'
 import type { Notification } from '@/lib/supabase/db'
 import { TrendingUp, Gift, AlertTriangle, Info, CheckCheck, Bell, DollarSign, ArrowUpFromLine } from 'lucide-react'
@@ -25,6 +26,12 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (!user) return
     getNotifications(user.uid).then(setNotifications)
+    return subscribeToTable<Notification>(
+      'notifications',
+      'INSERT',
+      (row) => setNotifications(prev => [row, ...prev]),
+      { col: 'user_id', val: user.uid },
+    )
   }, [user])
 
   const unreadCount = notifications.filter(n => !n.read).length

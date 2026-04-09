@@ -1,7 +1,7 @@
 export interface TxRecord {
   id: string
-  type: 'Withdrawal'
-  method: 'bank' | 'crypto'
+  type: 'Withdrawal' | 'Credit' | 'Debit' | 'Deposit'
+  method: 'bank' | 'crypto' | 'admin'
   amount: string
   status: 'Pending' | 'Completed' | 'Failed'
   date: string

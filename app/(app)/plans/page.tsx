@@ -4,9 +4,11 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { useAuth } from '@/context/auth-context'
-import { insertInvestment, getUserInvestments, completeInvestment, insertTransaction } from '@/lib/supabase/db'
+import { insertInvestment, getUserInvestments } from '@/lib/supabase/db'
 import type { Investment } from '@/lib/supabase/db'
 import { useState, useEffect, useCallback } from 'react'
+import { useCountdown } from '@/hooks/use-countdown'
+import { subscribeToTable } from '@/lib/supabase/realtime'
 import { TrendingUp, TrendingDown, Clock, CheckCircle2, Wallet, ShieldCheck, Activity, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import React from 'react'
@@ -20,48 +22,10 @@ const PLANS = [
   { amount: 2000, label: 'Elite',    est: '10–25%', color: '#f59e0b' },
 ]
 
-function useCountdown(endTime: string) {
-  const [remaining, setRemaining] = useState(() => Math.max(0, new Date(endTime).getTime() - Date.now()))
-  useEffect(() => {
-    const tick = () => setRemaining(Math.max(0, new Date(endTime).getTime() - Date.now()))
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [endTime])
-  const h = Math.floor(remaining / 3600000)
-  const m = Math.floor((remaining % 3600000) / 60000)
-  const s = Math.floor((remaining % 60000) / 1000)
-  return { remaining, label: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` }
-}
-
-function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () => void }) {
+function CountdownCell({ inv }: { inv: Investment }) {
   const { remaining, label } = useCountdown(inv.end_time)
   const total = Math.max(1, new Date(inv.end_time).getTime() - new Date(inv.start_time).getTime())
   const progress = Math.max(0, Math.min(100, ((total - remaining) / total) * 100))
-  const { refreshProfile } = useAuth()
-
-  useEffect(() => {
-    if (remaining === 0 && inv.status === 'active') {
-      const isProfit = Math.random() < 0.6
-      const pct = isProfit ? 0.05 + Math.random() * 0.20 : -(0.02 + Math.random() * 0.13)
-      const profitLoss = parseFloat((inv.amount * pct).toFixed(2))
-      completeInvestment(inv.id, profitLoss).then(({ error }) => {
-        if (!error) {
-          // Record credit transaction (amount returned + profit/loss)
-          insertTransaction({
-            id: 'TXN-' + Math.random().toString(36).slice(2, 10).toUpperCase(),
-            user_id: inv.user_id,
-            type: 'Credit',
-            method: 'admin',
-            amount: parseFloat((inv.amount + profitLoss).toFixed(2)),
-            status: 'Completed',
-            note: `Investment returned — ${profitLoss >= 0 ? '+' : ''}$${profitLoss.toFixed(2)} ${profitLoss >= 0 ? 'profit' : 'loss'}`,
-          })
-          onComplete()
-          refreshProfile()
-        }
-      })
-    }
-  }, [remaining, inv, onComplete, refreshProfile])
 
   return (
     <div className="flex-1">
@@ -90,6 +54,24 @@ export default function PlansPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Realtime: sync investment status changes (completion handled server-side by DB trigger)
+  useEffect(() => {
+    if (!user) return
+    return subscribeToTable<Investment>(
+      'investments',
+      ['INSERT', 'UPDATE'],
+      (row, event) => {
+        setInvestments(prev => {
+          if (event === 'INSERT') return [row, ...prev]
+          return prev.map(i => i.id === row.id ? { ...i, ...row } : i)
+        })
+        // Refresh profile balance when an investment completes (DB trigger credited it)
+        if (event === 'UPDATE' && row.status === 'completed') refreshProfile()
+      },
+      { col: 'user_id', val: user.uid },
+    )
+  }, [user, refreshProfile])
+
   const active = investments.filter(i => i.status === 'active')
   const completed = investments.filter(i => i.status === 'completed')
 
@@ -98,23 +80,13 @@ export default function PlansPage() {
     setLoading(true)
     const { data: inv, error } = await insertInvestment(user.uid, selectedPlan.amount)
     setLoading(false)
-    if (error) {
-      toast.error(error.includes('Insufficient') ? 'Insufficient balance' : 'Failed to start investment')
+    if (error || !inv) {
+      toast.error(error?.includes('Insufficient') ? 'Insufficient balance' : 'Failed to start investment')
     } else {
-      // Record debit transaction
-      insertTransaction({
-        id: 'TXN-' + Math.random().toString(36).slice(2, 10).toUpperCase(),
-        user_id: user.uid,
-        type: 'Debit',
-        method: 'admin',
-        amount: selectedPlan.amount,
-        status: 'Completed',
-        note: `Investment placed — ${selectedPlan.label} plan`,
-      })
       toast.success(`$${selectedPlan.amount} investment started! Returns in 5 hours.`)
       setModalOpen(false)
-      load()
       refreshProfile()
+      // Realtime INSERT will add it to investments list automatically
     }
   }
 
@@ -224,7 +196,7 @@ export default function PlansPage() {
                       <p className="text-white font-semibold">${Number(inv.amount).toLocaleString()} <span className="text-white/40 font-normal text-xs">— {plan?.label ?? 'Plan'}</span></p>
                       <p className="text-white/30 text-xs">{new Date(inv.start_time).toLocaleTimeString()}</p>
                     </div>
-                    <CountdownCell inv={inv} onComplete={load} />
+                    <CountdownCell inv={inv} />
                   </div>
                 </div>
               )
