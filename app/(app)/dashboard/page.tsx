@@ -104,6 +104,12 @@ function useLivePrice(coinId: string, color: string) {
   return { data, current, change }
 }
 
+const COIN_LOGOS: Record<string, string> = {
+  bitcoin: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+  'usd-coin': 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
+  ethereum: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+}
+
 function PriceChart({ coinId, label, symbol, color }: { coinId: string; label: string; symbol: string; color: string }) {
   const { data, current, change } = useLivePrice(coinId, color)
   const up = change >= 0
@@ -114,6 +120,8 @@ function PriceChart({ coinId, label, symbol, color }: { coinId: string; label: s
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {COIN_LOGOS[coinId] && <img src={COIN_LOGOS[coinId]} alt={label} width={28} height={28} className="rounded-full" />}
           <span className="text-white font-bold text-lg">{label}</span>
           <span className="text-xs px-2 py-0.5 rounded-full font-mono font-semibold" style={{ background: `${color}18`, color }}>{symbol}/USD</span>
         </div>

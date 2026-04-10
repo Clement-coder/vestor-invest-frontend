@@ -97,10 +97,11 @@ export default function AdminPage() {
         // Update unread badge counts for all users
         if (row.role === 'user') {
           setAllMsgCounts(prev => ({ ...prev, [row.user_id]: (prev[row.user_id] ?? 0) + 1 }))
-          // Add user to chat list if not already there
+          // Add user to chat list if not already there, or bump to top
           setChatUsers(prev => {
-            if (prev.some(cu => cu.user_id === row.user_id)) return prev
-            return [...prev, { user_id: row.user_id, profiles: null }]
+            const filtered = prev.filter(cu => cu.user_id !== row.user_id)
+            const existing = prev.find(cu => cu.user_id === row.user_id)
+            return [existing ?? { user_id: row.user_id, profiles: null }, ...filtered]
           })
         }
       },
@@ -159,9 +160,14 @@ export default function AdminPage() {
     const msg: Omit<ChatMessage, 'id' | 'created_at'> = { user_id: selectedChatUser, role: 'agent', text: replyText, image_url: null }
     const optimistic: ChatMessage = { ...msg, id: Date.now(), created_at: new Date().toISOString() }
     setChatMsgs(prev => [...prev, optimistic])
+    // Bump this user to top of list
+    setChatUsers(prev => {
+      const existing = prev.find(cu => cu.user_id === selectedChatUser)
+      if (!existing) return prev
+      return [existing, ...prev.filter(cu => cu.user_id !== selectedChatUser)]
+    })
     setReplyText('')
     await insertChatMessage(msg)
-    // Realtime will push the real row back; dedup logic in subscription handles it
   }
 
   const sendImage = async (file: File) => {
