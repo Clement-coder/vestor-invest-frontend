@@ -3,9 +3,9 @@
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassChart } from '@/components/glass/glass-chart'
 import { useAuth } from '@/context/auth-context'
-import { getUserInvestments } from '@/lib/supabase/db'
+import { getUserInvestments, completeInvestment } from '@/lib/supabase/db'
 import type { Investment } from '@/lib/supabase/db'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCountdown } from '@/hooks/use-countdown'
 import { subscribeToTable } from '@/lib/supabase/realtime'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
@@ -13,12 +13,22 @@ import { TrendingUp, TrendingDown, ArrowRightLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
-function ActiveInvestmentRow({ inv }: { inv: Investment }) {
+function ActiveInvestmentRow({ inv, onComplete }: { inv: Investment; onComplete: () => void }) {
   const start = new Date(inv.start_time).getTime()
   const end = new Date(inv.end_time).getTime()
   const total = Math.max(1, end - start)
-  const { remaining, label } = useCountdown(inv.end_time)
+  const { remaining, label, done } = useCountdown(inv.end_time)
   const pct = Math.min(((total - remaining) / total) * 100, 100)
+  const settling = useRef(false)
+
+  useEffect(() => {
+    if (!done || settling.current) return
+    settling.current = true
+    // Random profit/loss between -5% and +15% of invested amount
+    const rate = -0.05 + Math.random() * 0.20
+    const profitLoss = parseFloat((Number(inv.amount) * rate).toFixed(2))
+    completeInvestment(inv.id, profitLoss).then(onComplete)
+  }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <GlassCard variant="nested" className="flex flex-col gap-3">
@@ -292,7 +302,7 @@ export default function DashboardPage() {
               const pl = Number(inv.profit_loss ?? 0)
               const isActive = inv.status === 'active'
               const isProfit = pl >= 0
-              if (isActive) return <ActiveInvestmentRow key={inv.id} inv={inv} />
+              if (isActive) return <ActiveInvestmentRow key={inv.id} inv={inv} onComplete={() => { getUserInvestments(user!.uid).then(setInvestments); refreshProfile() }} />
               return (
                 <GlassCard key={inv.id} variant="nested" className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">

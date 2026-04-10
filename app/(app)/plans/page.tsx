@@ -4,9 +4,9 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassModal } from '@/components/glass/glass-modal'
 import { useAuth } from '@/context/auth-context'
-import { insertInvestment, getUserInvestments } from '@/lib/supabase/db'
+import { insertInvestment, getUserInvestments, completeInvestment } from '@/lib/supabase/db'
 import type { Investment } from '@/lib/supabase/db'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useCountdown } from '@/hooks/use-countdown'
 import { subscribeToTable } from '@/lib/supabase/realtime'
 import { TrendingUp, TrendingDown, Clock, CheckCircle2, Wallet, ShieldCheck, Activity, Zap } from 'lucide-react'
@@ -22,10 +22,19 @@ const PLANS = [
   { amount: 2000, label: 'Elite',    est: '10–25%', color: '#f59e0b' },
 ]
 
-function CountdownCell({ inv }: { inv: Investment }) {
-  const { remaining, label } = useCountdown(inv.end_time)
+function CountdownCell({ inv, onComplete }: { inv: Investment; onComplete: () => void }) {
+  const { remaining, label, done } = useCountdown(inv.end_time)
   const total = Math.max(1, new Date(inv.end_time).getTime() - new Date(inv.start_time).getTime())
   const progress = Math.max(0, Math.min(100, ((total - remaining) / total) * 100))
+  const settling = useRef(false)
+
+  useEffect(() => {
+    if (!done || settling.current) return
+    settling.current = true
+    const rate = -0.05 + Math.random() * 0.20
+    const profitLoss = parseFloat((Number(inv.amount) * rate).toFixed(2))
+    completeInvestment(inv.id, profitLoss).then(onComplete)
+  }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex-1">
@@ -196,7 +205,7 @@ export default function PlansPage() {
                       <p className="text-white font-semibold">${Number(inv.amount).toLocaleString()} <span className="text-white/40 font-normal text-xs">— {plan?.label ?? 'Plan'}</span></p>
                       <p className="text-white/30 text-xs">{new Date(inv.start_time).toLocaleTimeString()}</p>
                     </div>
-                    <CountdownCell inv={inv} />
+                    <CountdownCell inv={inv} onComplete={() => { load(); refreshProfile() }} />
                   </div>
                 </div>
               )
