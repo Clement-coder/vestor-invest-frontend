@@ -12,6 +12,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart,
 import { TrendingUp, TrendingDown, ArrowRightLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
+import { BalanceAmount } from '@/components/common/balance-amount'
 
 function ActiveInvestmentRow({ inv, onComplete }: { inv: Investment; onComplete: () => void }) {
   const start = new Date(inv.start_time).getTime()
@@ -222,18 +223,18 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <GlassCard variant="elevated" glow="cyan">
           <p className="text-white/60 text-sm mb-2">Total Balance</p>
-          <p className="text-2xl sm:text-4xl font-bold text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl sm:text-4xl font-bold text-white"><BalanceAmount amount={balance} logoSize={22} /></p>
           <p className="text-white/40 text-sm mt-2">{active.length > 0 ? `${active.length} active investment${active.length > 1 ? 's' : ''}` : 'Available balance'}</p>
         </GlassCard>
         <GlassCard variant="elevated">
           <p className="text-white/60 text-sm mb-2">Active Investments</p>
-          <p className="text-2xl sm:text-4xl font-bold text-white">${activeValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl sm:text-4xl font-bold text-white"><BalanceAmount amount={activeValue} logoSize={22} /></p>
           <p className="text-white/40 text-sm mt-2">{active.length} plan{active.length !== 1 ? 's' : ''} running</p>
         </GlassCard>
         <GlassCard variant="elevated" glow={totalProfit >= 0 ? 'green' : 'none'}>
           <p className="text-white/60 text-sm mb-2">Total Returns</p>
           <p className={`text-2xl sm:text-4xl font-bold ${totalProfit > 0 ? 'text-[#39ff9e]' : totalProfit < 0 ? 'text-red-400' : 'text-white'}`}>
-            {totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <BalanceAmount amount={totalProfit} prefix={totalProfit >= 0 ? '+' : ''} logoSize={22} />
           </p>
           <p className="text-white/40 text-sm mt-2">{completed.length} completed</p>
         </GlassCard>

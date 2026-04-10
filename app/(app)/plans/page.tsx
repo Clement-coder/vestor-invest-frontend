@@ -12,6 +12,7 @@ import { subscribeToTable } from '@/lib/supabase/realtime'
 import { TrendingUp, TrendingDown, Clock, CheckCircle2, Wallet, ShieldCheck, Activity, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import React from 'react'
+import { BalanceAmount } from '@/components/common/balance-amount'
 
 const PLANS = [
   { amount: 50,   label: 'Micro',    est: '3–12%',  color: '#00a8ff' },
@@ -112,7 +113,7 @@ export default function PlansPage() {
           <Wallet size={18} className="text-[#00a8ff]" />
           <div>
             <p className="text-white/40 text-xs">Available Balance</p>
-            <p className="text-white font-bold text-lg leading-tight">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            <p className="text-white font-bold text-lg leading-tight"><BalanceAmount amount={balance} /></p>
           </div>
         </div>
       </div>
@@ -273,11 +274,11 @@ export default function PlansPage() {
                 <div className="h-px bg-white/10" />
                 <div className="flex justify-between text-sm">
                   <span className="text-white/50">Your Balance</span>
-                  <span className="text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-white"><BalanceAmount amount={balance} hideLogo /></span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-white/50">Balance After</span>
-                  <span className="text-white font-semibold">${(balance - selectedPlan.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-white font-semibold"><BalanceAmount amount={balance - selectedPlan.amount} hideLogo /></span>
                 </div>
               </div>
             </div>

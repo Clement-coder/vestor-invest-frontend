@@ -19,12 +19,13 @@ import {
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import React from 'react'
+import { BalanceAmount } from '@/components/common/balance-amount'
 
 const TOP4 = [
-  { code: 'USD', name: 'US Dollar', symbol: '$', logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/us.svg', round: false },
-  { code: 'EUR', name: 'Euro', symbol: '€', logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/eu.svg', round: false },
-  { code: 'BTC', name: 'Bitcoin', symbol: '₿', logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', round: true },
-  { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', round: true },
+  { code: 'USD' as const, name: 'US Dollar',  symbol: '$', logo: 'https://assets.coingecko.com/coins/images/6319/small/usdc.png', round: true },
+  { code: 'EUR' as const, name: 'Euro',        symbol: '€', logo: 'https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/eu.svg', round: false },
+  { code: 'BTC' as const, name: 'Bitcoin',     symbol: '₿', logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', round: true },
+  { code: 'ETH' as const, name: 'Ethereum',    symbol: 'Ξ', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', round: true },
 ]
 
 // Map Transaction to TxRecord shape for receipt
@@ -233,11 +234,7 @@ export default function WalletPage() {
     if (entered !== savedPin) { setPinError('Incorrect PIN'); setPin(['', '', '', '']); setTimeout(() => pinRefs[0].current?.focus(), 50); return }
     saveTxAndSuccess()
   }
-  const [balanceVisible, setBalanceVisible] = useState(() => {
-    if (typeof window === 'undefined') return true
-    const stored = localStorage.getItem('vestor_balance_visible')
-    return stored === null ? true : stored === 'true'
-  })
+  const { balanceVisible, toggleBalanceVisible } = useAuth()
   const [refreshing, setRefreshing] = useState(false)
   const [rates, setRates] = useState<Record<string, number>>({ USD: 1, EUR: 0.92, BTC: 0.000015, ETH: 0.00045 })
 
@@ -328,7 +325,7 @@ export default function WalletPage() {
             <div className="flex items-center gap-2">
               {/* Eye toggle — the star of the show */}
               <button
-                onClick={() => setBalanceVisible(v => { localStorage.setItem('vestor_balance_visible', String(!v)); return !v })}
+                onClick={toggleBalanceVisible}
                 className="relative w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden group"
                 style={{ background: 'rgba(0,168,255,0.08)', border: '1px solid rgba(0,168,255,0.2)' }}
                 aria-label="Toggle balance visibility"
@@ -408,25 +405,21 @@ export default function WalletPage() {
         {TOP4.map((cur) => {
           const rate = rates[cur.code] ?? 1
           const converted = balance * rate
-          const formatted = cur.code === 'BTC' || cur.code === 'ETH'
-            ? converted.toFixed(6)
-            : converted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           return (
-            <GlassCard key={cur.code} variant="nested" hover={false} className="flex flex-col gap-2 py-4 px-4">
-              <div className="flex items-center gap-2">
+            <GlassCard key={cur.code} variant="nested" hover={false} className="flex flex-col gap-3 py-4 px-4">
+              {/* Logo + name row */}
+              <div className="flex items-center gap-2.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cur.logo} alt={cur.code} width={22} height={22} className={cur.round ? 'rounded-full' : 'rounded-sm object-cover'} style={{ width: 22, height: 22 }} />
-                <p className="text-white/50 text-xs truncate">{cur.name}</p>
+                <img src={cur.logo} alt={cur.code} width={32} height={32}
+                  className={cur.round ? 'rounded-full shrink-0' : 'rounded-sm shrink-0 object-cover'}
+                  style={{ width: 32, height: 32 }} />
+                <div>
+                  <p className="text-white font-bold text-xs">{cur.code}</p>
+                  <p className="text-white/40 text-[10px]">{cur.name}</p>
+                </div>
               </div>
-              <p className="text-white font-bold text-base sm:text-lg truncate overflow-hidden">
-                <span
-                  key={`${cur.code}-${balanceVisible}`}
-                  style={{ display: 'inline-block', animation: 'reveal-up 0.4s cubic-bezier(0.22,1,0.36,1)' }}
-                >
-                  {balanceVisible ? `${cur.symbol}${formatted}` : <span style={{ color: 'rgba(0,168,255,0.25)', letterSpacing: '0.15em' }}>████</span>}
-                </span>
-              </p>
-              <p className="text-white/30 text-xs">{cur.code}</p>
+              {/* Amount — uses global visibility */}
+              <BalanceAmount amount={converted} currency={cur.code} className="text-white font-bold text-base sm:text-lg" hideLogo />
             </GlassCard>
           )
         })}
