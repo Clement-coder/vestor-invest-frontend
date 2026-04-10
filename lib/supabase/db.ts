@@ -159,7 +159,14 @@ export async function adminUpdateBalance(userId: string, newBalance: number) {
 }
 
 export async function adminUpdateTransactionStatus(txId: string, status: 'Completed' | 'Failed') {
-  return dbProxy({ table: 'transactions', action: 'update', payload: { status }, filters: [['id', txId]] })
+  const res = await fetch('/api/transactions/settle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ txId, status }),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'Failed')
+  return json
 }
 
 // ── Investments ───────────────────────────────────────────
